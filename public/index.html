@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interview Practice</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section id="login-view" class="login" hidden>
+  <h1>Interview Practice</h1>
+  <form id="login-form">
+    <label for="username">Username</label>
+    <input id="username" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <div id="login-error" class="error" role="alert"></div>
+    <button class="btn" type="submit">Log in</button>
+  </form>
+</section>
+
+<div id="dash-view" hidden>
+  <header>
+    <h1>Dashboard</h1>
+    <div class="right">
+      <button id="create-account" class="btn" hidden>Create Account</button>
+      <span id="greeting" class="greeting" hidden></span>
+      <button id="logout" class="btn ghost">Log out</button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside><button id="start-interview" class="btn" hidden>Start New Interview</button></aside>
+    <main><p class="empty">Nothing here yet.</p></main>
+  </div>
+</div>
+
+<div id="modal" class="overlay" hidden>
+  <form id="account-form" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" novalidate>
+    <h2 id="modal-title">Create your account</h2>
+    <label for="first">First name <span class="req">*</span></label>
+    <input id="first" autocomplete="given-name">
+    <label for="last">Last name</label>
+    <input id="last" autocomplete="family-name">
+    <label for="email">Email address <span class="req">*</span></label>
+    <input id="email" type="email" autocomplete="email">
+    <div id="account-error" class="error" role="alert"></div>
+    <div class="actions"><button id="done" class="btn" type="submit" disabled>Done</button></div>
+  </form>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
