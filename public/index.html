@@ -48,7 +48,7 @@
   </form>
 </div>
 <div id="iv-modal" class="overlay" hidden>
-  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="iv-title">
+  <div id="iv-dialog" class="modal wide" role="dialog" aria-modal="true" aria-labelledby="iv-title">
     <button id="iv-close" class="close" aria-label="Close">&times;</button>
 
     <form id="iv-step1" novalidate>
@@ -80,18 +80,71 @@
       <div id="iv-error2" class="error" role="alert"></div>
       <div class="actions between">
         <button id="iv-back" class="btn ghost" type="button">Back</button>
-        <button id="iv-done" class="btn" type="submit" disabled>Done</button>
+        <button id="iv-done" class="btn" type="submit" disabled>Begin Interview</button>
       </div>
     </form>
 
     <div id="iv-loading" hidden><h2>Preparing your questions&hellip;</h2><p class="hint">This can take up to a minute.</p></div>
 
-    <div id="iv-results" hidden>
-      <h2>Your interview questions</h2>
+    <div id="iv-choice" hidden>
       <div id="iv-alignment"></div>
-      <ol id="iv-questions" class="questions"></ol>
+      <h2>Would you like to see the questions in advance?</h2>
       <div id="iv-notes" class="hint"></div>
-      <div class="actions"><button id="iv-finish" class="btn" type="button">Close</button></div>
+      <div id="iv-choice-error" class="error" role="alert"></div>
+      <div class="actions between">
+        <button id="iv-see-yes" class="btn ghost" type="button">Yes, show me</button>
+        <button id="iv-see-no" class="btn" type="button">No, begin now</button>
+      </div>
+    </div>
+
+    <div id="iv-list" hidden>
+      <h2>Your interview questions</h2>
+      <ol id="iv-questions" class="questions"></ol>
+      <div class="actions between">
+        <button id="iv-list-close" class="btn ghost" type="button">Close</button>
+        <button id="iv-list-begin" class="btn" type="button">Begin Interview</button>
+      </div>
+    </div>
+
+    <div id="iv-room" hidden>
+      <div class="room">
+        <div class="pane andy-pane">
+          <svg id="andy" viewBox="0 0 300 340" role="img" aria-label="Andy, your interviewer">
+            <defs>
+              <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4a6b"/><stop offset="1" stop-color="#2a3550"/></linearGradient>
+            </defs>
+            <path d="M20 340 C30 272 85 250 150 250 C215 250 270 272 280 340 Z" fill="url(#shirt)"/>
+            <path d="M118 252 L150 300 L182 252 L168 246 L150 268 L132 246 Z" fill="#f2f3f7"/>
+            <rect x="124" y="196" width="52" height="62" rx="18" fill="#c58e6c"/>
+            <g id="andy-head">
+              <ellipse cx="88" cy="158" rx="10" ry="15" fill="#d9a07c"/>
+              <ellipse cx="212" cy="158" rx="10" ry="15" fill="#d9a07c"/>
+              <ellipse cx="150" cy="150" rx="62" ry="78" fill="#e0a985"/>
+              <path d="M84 146 C70 66 118 40 154 42 C196 42 232 70 216 146 C208 110 192 90 150 88 C110 90 92 110 84 146 Z" fill="#3a2a22"/>
+              <path d="M104 124 Q122 114 138 122" stroke="#3a2a22" stroke-width="5" stroke-linecap="round" fill="none"/>
+              <path d="M162 122 Q178 114 196 124" stroke="#3a2a22" stroke-width="5" stroke-linecap="round" fill="none"/>
+              <g id="eye-l" class="eye"><ellipse cx="122" cy="144" rx="11" ry="7.5" fill="#fff"/><circle id="pupil-l" cx="122" cy="144" r="5" fill="#2b2118"/></g>
+              <g id="eye-r" class="eye"><ellipse cx="178" cy="144" rx="11" ry="7.5" fill="#fff"/><circle id="pupil-r" cx="178" cy="144" r="5" fill="#2b2118"/></g>
+              <path d="M150 150 Q142 176 148 182 Q154 186 160 181" stroke="#b9805f" stroke-width="3" stroke-linecap="round" fill="none"/>
+              <ellipse id="mouth" cx="150" cy="204" rx="17" ry="2" fill="#6e2a2f"/>
+              <path id="lip" d="M133 204 Q150 212 167 204" stroke="#a65a55" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            </g>
+          </svg>
+          <div class="tag">Andy &middot; Interviewer</div>
+        </div>
+        <div class="pane me-pane">
+          <video id="iv-video" autoplay muted playsinline></video>
+          <div id="iv-novideo" class="novideo" hidden>Camera is off</div>
+          <div class="tag">You</div>
+        </div>
+      </div>
+      <p id="iv-caption" class="caption" aria-live="polite"></p>
+      <div class="silence" aria-hidden="true"><div id="iv-silence"></div></div>
+      <div id="iv-status" class="hint"></div>
+      <div class="actions between">
+        <span id="iv-progress" class="hint"></span>
+        <button id="iv-end" class="btn ghost" type="button">End interview</button>
+      </div>
     </div>
   </div>
 </div>
