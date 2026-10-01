@@ -9,4 +9,4 @@ Login: `test` / `test`. Accounts are stored in SQLite (`interview.db`, override 
 
 ## Question generation
 
-Set `ANTHROPIC_API_KEY` (optionally `ANTHROPIC_MODEL`) to have Claude write the questions and the role/experience alignment check. Without it, the app falls back to a simple built-in generator.
+Questions come from a built-in generator. A Claude-powered path exists but is switched off; enable it with `USE_CLAUDE=1` and `ANTHROPIC_API_KEY`.

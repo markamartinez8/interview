@@ -90,12 +90,10 @@ const editorText = () => $('iv-editor').innerText.trim();
 
 const step1Valid = () => $('iv-role').value.trim() !== '' && (!$('iv-url').value.trim() || validUrl($('iv-url').value.trim()));
 const step2Valid = () => {
-  const li = $('iv-linkedin').value.trim();
-  if (li && !validUrl(li)) return false;
-  return !!li || !!iv.resumeText || editorText() !== '';
+  return !!iv.resumeText || editorText() !== '';
 };
 const refreshIv = () => { $('iv-next').disabled = !step1Valid(); $('iv-done').disabled = !step2Valid(); };
-['iv-company', 'iv-role', 'iv-url', 'iv-linkedin'].forEach((id) => $(id).addEventListener('input', refreshIv));
+['iv-company', 'iv-role', 'iv-url'].forEach((id) => $(id).addEventListener('input', refreshIv));
 $('iv-editor').addEventListener('input', refreshIv);
 
 document.querySelectorAll('.toolbar button').forEach((btn) => {
@@ -105,7 +103,7 @@ document.querySelectorAll('.toolbar button').forEach((btn) => {
 
 $('start-interview').addEventListener('click', () => {
   iv.resumeText = '';
-  ['iv-company', 'iv-role', 'iv-url', 'iv-linkedin', 'iv-file'].forEach((id) => { $(id).value = ''; });
+  ['iv-company', 'iv-role', 'iv-url', 'iv-file'].forEach((id) => { $(id).value = ''; });
   $('iv-editor').innerHTML = '';
   $('iv-file-status').textContent = '';
   $('iv-error1').textContent = $('iv-error2').textContent = '';
@@ -165,7 +163,6 @@ function renderResults(r) {
     <div class="hint">This is informational only.</div></div>`;
   $('iv-questions').innerHTML = r.questions.map((q) => `<li>${q.category ? `<span class="cat">${esc(q.category)}</span>` : ''}${esc(q.question)}</li>`).join('');
   const notes = [...(r.notes || [])];
-  if (r.source === 'built-in') notes.push('Questions were generated with built-in templates. Set ANTHROPIC_API_KEY on the server for questions tailored by Claude.');
   $('iv-notes').textContent = notes.join(' ');
   ivShow('iv-results');
 }
@@ -177,7 +174,7 @@ $('iv-step2').addEventListener('submit', async (e) => {
   try {
     const r = await api('/api/interviews', {
       company: $('iv-company').value, role: $('iv-role').value, jobUrl: $('iv-url').value,
-      linkedin: $('iv-linkedin').value, resumeText: iv.resumeText, pastedText: editorText(),
+      resumeText: iv.resumeText, pastedText: editorText(),
     });
     renderResults(r);
   } catch (err) {

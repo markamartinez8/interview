@@ -109,12 +109,11 @@ app.post('/api/interviews', requireAuth, async (req, res) => {
   const company = String(b.company ?? '').trim().slice(0, 200);
   const role = String(b.role ?? '').trim().slice(0, 200);
   const jobUrl = String(b.jobUrl ?? '').trim();
-  const linkedin = String(b.linkedin ?? '').trim();
   const resumeText = String(b.resumeText ?? '').trim();
   const pastedText = String(b.pastedText ?? '').trim();
   if (!role) return res.status(400).json({ error: 'Position/Role is required' });
-  if (!linkedin && !resumeText && !pastedText) return res.status(400).json({ error: 'Provide a LinkedIn link, resume, or pasted experience' });
-  for (const [label, v] of [['Job description URL', jobUrl], ['LinkedIn link', linkedin]]) {
+  if (!resumeText && !pastedText) return res.status(400).json({ error: 'Upload a resume or paste your experience' });
+  for (const [label, v] of [['Job description URL', jobUrl]]) {
     if (v) { try { if (!/^https?:$/.test(new URL(v).protocol)) throw 0; } catch { return res.status(400).json({ error: `${label} is not a valid URL` }); } }
   }
   const notes = [];
@@ -123,10 +122,10 @@ app.post('/api/interviews', requireAuth, async (req, res) => {
     try { jobText = await fetchPageText(jobUrl); } catch (e) { notes.push(`Could not read the job description page (${e.message}); used the role title only.`); }
   }
   const candidateText = [resumeText, pastedText].filter(Boolean).join('\n\n').slice(0, 40000);
-  const result = await generate({ company, role, jobText, linkedin, candidateText });
+  const result = await generate({ company, role, jobText, candidateText });
   result.notes = notes;
-  const info = db.prepare(`INSERT INTO interviews (username, company, role, job_url, linkedin, experience_text, questions, alignment)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(req.user, company, role, jobUrl, linkedin, candidateText, JSON.stringify(result.questions), JSON.stringify(result.alignment));
+  const info = db.prepare(`INSERT INTO interviews (username, company, role, job_url, experience_text, questions, alignment)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`).run(req.user, company, role, jobUrl, candidateText, JSON.stringify(result.questions), JSON.stringify(result.alignment));
   res.json({ id: Number(info.lastInsertRowid), ...result });
 });
 
