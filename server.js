@@ -2,6 +2,8 @@ const express = require('express');
 const crypto = require('node:crypto');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
+const { fetchPageText } = require('./lib/fetchPage');
+const { generate } = require('./lib/generate');
 
 const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, 'interview.db'));
 db.exec(`CREATE TABLE IF NOT EXISTS accounts (
@@ -12,12 +14,25 @@ db.exec(`CREATE TABLE IF NOT EXISTS accounts (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`);
 
+db.exec(`CREATE TABLE IF NOT EXISTS interviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  company TEXT NOT NULL DEFAULT '',
+  role TEXT NOT NULL,
+  job_url TEXT NOT NULL DEFAULT '',
+  linkedin TEXT NOT NULL DEFAULT '',
+  experience_text TEXT NOT NULL DEFAULT '',
+  questions TEXT NOT NULL,
+  alignment TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`);
+
 // Hard-coded credentials for now.
 const USERS = { test: 'test' };
 const sessions = new Map(); // token -> username
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 function cookieToken(req) {
   const m = /(?:^|;\s*)session=([^;]+)/.exec(req.headers.cookie || '');
@@ -67,6 +82,52 @@ app.post('/api/account', requireAuth, (req, res) => {
     ON CONFLICT(username) DO UPDATE SET first_name=excluded.first_name, last_name=excluded.last_name, email=excluded.email`)
     .run(req.user, firstName, lastName, email);
   res.json({ account: getAccount(req.user) });
+});
+
+app.post('/api/resume', requireAuth, async (req, res) => {
+  const { filename, data } = req.body || {};
+  if (typeof filename !== 'string' || typeof data !== 'string') return res.status(400).json({ error: 'Invalid upload' });
+  const buf = Buffer.from(data, 'base64');
+  if (!buf.length || buf.length > 5 * 1024 * 1024) return res.status(400).json({ error: 'File must be under 5 MB' });
+  const ext = path.extname(filename).toLowerCase();
+  try {
+    let text;
+    if (ext === '.pdf') text = (await require('pdf-parse')(buf)).text;
+    else if (ext === '.docx') text = (await require('mammoth').extractRawText({ buffer: buf })).value;
+    else if (ext === '.txt' || ext === '.md') text = buf.toString('utf8');
+    else return res.status(400).json({ error: 'Upload a PDF, DOCX or TXT file' });
+    text = text.replace(/\s+\n/g, '\n').trim();
+    if (text.length < 20) return res.status(400).json({ error: 'No readable text found in that file' });
+    res.json({ text: text.slice(0, 30000) });
+  } catch {
+    res.status(400).json({ error: 'Could not read that file' });
+  }
+});
+
+app.post('/api/interviews', requireAuth, async (req, res) => {
+  const b = req.body || {};
+  const company = String(b.company ?? '').trim().slice(0, 200);
+  const role = String(b.role ?? '').trim().slice(0, 200);
+  const jobUrl = String(b.jobUrl ?? '').trim();
+  const linkedin = String(b.linkedin ?? '').trim();
+  const resumeText = String(b.resumeText ?? '').trim();
+  const pastedText = String(b.pastedText ?? '').trim();
+  if (!role) return res.status(400).json({ error: 'Position/Role is required' });
+  if (!linkedin && !resumeText && !pastedText) return res.status(400).json({ error: 'Provide a LinkedIn link, resume, or pasted experience' });
+  for (const [label, v] of [['Job description URL', jobUrl], ['LinkedIn link', linkedin]]) {
+    if (v) { try { if (!/^https?:$/.test(new URL(v).protocol)) throw 0; } catch { return res.status(400).json({ error: `${label} is not a valid URL` }); } }
+  }
+  const notes = [];
+  let jobText = '';
+  if (jobUrl) {
+    try { jobText = await fetchPageText(jobUrl); } catch (e) { notes.push(`Could not read the job description page (${e.message}); used the role title only.`); }
+  }
+  const candidateText = [resumeText, pastedText].filter(Boolean).join('\n\n').slice(0, 40000);
+  const result = await generate({ company, role, jobText, linkedin, candidateText });
+  result.notes = notes;
+  const info = db.prepare(`INSERT INTO interviews (username, company, role, job_url, linkedin, experience_text, questions, alignment)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(req.user, company, role, jobUrl, linkedin, candidateText, JSON.stringify(result.questions), JSON.stringify(result.alignment));
+  res.json({ id: Number(info.lastInsertRowid), ...result });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

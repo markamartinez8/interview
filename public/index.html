@@ -47,6 +47,56 @@
     <div class="actions"><button id="done" class="btn" type="submit" disabled>Done</button></div>
   </form>
 </div>
+<div id="iv-modal" class="overlay" hidden>
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="iv-title">
+    <button id="iv-close" class="close" aria-label="Close">&times;</button>
+
+    <form id="iv-step1" novalidate>
+      <h2 id="iv-title">Tell me about the position you're interviewing for</h2>
+      <label for="iv-company">Company name</label>
+      <input id="iv-company" autocomplete="organization">
+      <label for="iv-role">Position/Role <span class="req">*</span></label>
+      <input id="iv-role">
+      <label for="iv-url">URL to the job description</label>
+      <input id="iv-url" type="url" placeholder="https://">
+      <div id="iv-error1" class="error" role="alert"></div>
+      <div class="actions"><button id="iv-next" class="btn" type="submit" disabled>Next</button></div>
+    </form>
+
+    <form id="iv-step2" novalidate hidden>
+      <h2>Tell me about your experience</h2>
+      <p class="hint">All three are optional, but add at least one.</p>
+      <label for="iv-linkedin">LinkedIn link</label>
+      <input id="iv-linkedin" type="url" placeholder="https://www.linkedin.com/in/...">
+      <label for="iv-file">Upload resume (PDF, DOCX or TXT)</label>
+      <input id="iv-file" type="file" accept=".pdf,.docx,.txt,.md">
+      <div id="iv-file-status" class="hint"></div>
+      <label>Paste your experience</label>
+      <div class="toolbar">
+        <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+        <button type="button" data-cmd="insertUnorderedList" title="Bullets">&bull; List</button>
+        <button type="button" data-cmd="insertOrderedList" title="Numbered">1. List</button>
+      </div>
+      <div id="iv-editor" class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Experience"></div>
+      <div id="iv-error2" class="error" role="alert"></div>
+      <div class="actions between">
+        <button id="iv-back" class="btn ghost" type="button">Back</button>
+        <button id="iv-done" class="btn" type="submit" disabled>Done</button>
+      </div>
+    </form>
+
+    <div id="iv-loading" hidden><h2>Preparing your questions&hellip;</h2><p class="hint">This can take up to a minute.</p></div>
+
+    <div id="iv-results" hidden>
+      <h2>Your interview questions</h2>
+      <div id="iv-alignment"></div>
+      <ol id="iv-questions" class="questions"></ol>
+      <div id="iv-notes" class="hint"></div>
+      <div class="actions"><button id="iv-finish" class="btn" type="button">Close</button></div>
+    </div>
+  </div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

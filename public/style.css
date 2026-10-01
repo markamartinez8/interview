@@ -27,3 +27,19 @@ main{flex:1;padding:1.5rem}
 .modal .actions{display:flex;justify-content:flex-end;margin-top:1.25rem}
 .req{color:#d93a3a}
 [hidden]{display:none!important}
+
+.modal.wide{max-width:560px;max-height:90vh;overflow:auto;position:relative}
+.close{position:absolute;top:.6rem;right:.9rem;background:none;border:0;font-size:1.6rem;color:var(--muted)}
+.actions.between{justify-content:space-between}
+.hint{color:var(--muted);font-size:.85rem;margin:.25rem 0}
+.toolbar{display:flex;gap:.4rem;margin-bottom:.4rem}
+.toolbar button{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:.2rem .6rem}
+.editor{min-height:130px;max-height:240px;overflow:auto;padding:.6rem .7rem;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.editor:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.questions{padding-left:1.25rem}
+.questions li{margin:.7rem 0}
+.questions .cat{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.align{border-radius:10px;padding:.8rem 1rem;margin:1rem 0;border:1px solid var(--border);background:var(--bg)}
+.align.weak,.align.partial{border-color:#d9a13a}
+.align strong{display:block;margin-bottom:.25rem}
+.align ul{margin:.3rem 0 0;padding-left:1.2rem}
