@@ -196,7 +196,7 @@ $('iv-step2').addEventListener('submit', async (e) => {
 // ---------- Live interview ----------
 const SILENCE_MS = () => window.IV_SILENCE_MS || 5000; // quiet time before Andy moves on
 const VOICE_LEVEL = 0.02;                              // mic RMS above this counts as speaking
-const room = { run: 0, stream: null, ctx: null, raf: 0, speaking: false, open: 0, nodUntil: 0, nextBlink: 0 };
+const room = { voice: null, run: 0, stream: null, ctx: null, raf: 0, speaking: false, open: 0, nodUntil: 0, nextBlink: 0 };
 
 $('iv-see-yes').addEventListener('click', () => ivShow('iv-list'));
 $('iv-see-no').addEventListener('click', () => startInterview());
@@ -227,31 +227,53 @@ async function getMedia() {
   }
 }
 
-function pickVoice() {
-  const voices = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
-  const en = voices.filter((v) => /^en/i.test(v.lang));
-  return en.find((v) => /daniel|david|guy|alex|fred|male/i.test(v.name)) || en.find((v) => /google us english|en-us/i.test(v.name + v.lang)) || en[0] || null;
+// Rank installed voices: natural/neural ones first, male-sounding English ones preferred for Andy.
+function scoreVoice(v) {
+  let s = 0;
+  if (/^en[-_]US/i.test(v.lang)) s += 4; else if (/^en/i.test(v.lang)) s += 2; else return -1;
+  if (/natural|neural|online/i.test(v.name)) s += 12;   // Edge / Windows neural voices
+  if (/premium|enhanced|siri/i.test(v.name)) s += 10;   // Apple high-quality voices
+  if (/google/i.test(v.name)) s += 6;                   // Chrome's Google voices
+  if (/guy|davis|andrew|brian|christopher|eric|roger|steffan|david|daniel|alex|aaron|fred|male/i.test(v.name)) s += 5;
+  if (/female|zira|aria|jenny|samantha|karen|moira|susan|hazel|victoria/i.test(v.name)) s -= 8;
+  return s;
 }
 
-// Speaks `text` as Andy; resolves when finished (or when an estimated time passes if the browser gives no event).
+// Waits (briefly) for the browser's voice list, then picks ONE voice that is reused for the whole interview.
+async function chooseVoice() {
+  if (!window.speechSynthesis) return null;
+  const list = () => speechSynthesis.getVoices();
+  if (!list().length) {
+    await new Promise((res) => {
+      const done = () => { speechSynthesis.removeEventListener('voiceschanged', done); res(); };
+      speechSynthesis.addEventListener('voiceschanged', done);
+      setTimeout(done, 2000);
+    });
+  }
+  const ranked = list().map((v) => [scoreVoice(v), v]).filter(([s]) => s >= 0).sort((x, y) => y[0] - x[0]);
+  return ranked.length ? ranked[0][1] : null;
+}
+
+// Speaks `text` as Andy with the single chosen voice; resolves when finished.
+// If the browser never starts speaking, an estimated duration stands in so the interview still moves on.
 function speak(text, run) {
   $('iv-caption').textContent = text;
   return new Promise((resolve) => {
-    let done = false;
+    let done = false, timer;
     const finish = () => { if (done) return; done = true; clearTimeout(timer); room.speaking = false; resolve(); };
-    const timer = setTimeout(finish, Math.max(2500, text.split(/\s+/).length * 450 + 2500));
+    const words = text.split(/\s+/).length;
     room.speaking = true;
     if (run !== room.run) return finish();
-    if (!window.speechSynthesis) return; // timer drives the mouth and the wait
+    if (!window.speechSynthesis) { timer = setTimeout(finish, words * 400 + 1500); return; }
     try {
       const u = new SpeechSynthesisUtterance(text);
-      const v = pickVoice();
-      if (v) u.voice = v;
-      u.rate = 0.98; u.pitch = 0.9; u.lang = (v && v.lang) || 'en-US';
+      if (room.voice) { u.voice = room.voice; u.lang = room.voice.lang; } else u.lang = 'en-US';
+      u.rate = 0.95; u.pitch = 1;
+      u.onstart = () => { clearTimeout(timer); timer = setTimeout(finish, words * 700 + 8000); }; // safety net only
       u.onend = finish; u.onerror = finish;
-      speechSynthesis.cancel();
+      timer = setTimeout(finish, 3000 + words * 400); // used only if speech never starts
       speechSynthesis.speak(u);
-    } catch { /* the timer covers it */ }
+    } catch { timer = setTimeout(finish, words * 400 + 1500); }
   });
 }
 
@@ -325,6 +347,8 @@ async function startInterview() {
   analyser.fftSize = 1024;
   room.ctx.createMediaStreamSource(media.stream).connect(analyser);
   animateAndy();
+  room.voice = await chooseVoice();
+  if (run !== room.run) return;
 
   const qs = iv.questions;
   const where = iv.company ? ` at ${iv.company}` : '';
