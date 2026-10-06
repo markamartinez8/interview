@@ -23,7 +23,7 @@
   const POLICY = '<a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic privacy policy</a>';
   C.disclosure = {
     questions: `Turning this on sends the job title and job description you entered to Anthropic's Claude so it can write your questions. See the ${POLICY}.`,
-    followups: `Turning this on sends the text of your answers (the transcript) and the job title to Anthropic's Claude so Andy can ask follow-up questions. Your video and audio are never sent. See the ${POLICY}.`,
+    followups: `Turning this on sends the text of your answers (the transcript) and the job title to Anthropic's Claude so Caddie can ask follow-up questions. Your video and audio are never sent. See the ${POLICY}.`,
     general: `AI features are optional and off by default. When on, Caddie sends text, never video or audio, to Anthropic's Claude. See the ${POLICY}.`,
   };
 })(window.Caddie);

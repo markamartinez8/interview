@@ -94,14 +94,14 @@
     };
   };
 
-  // Answer text in order, including any AI follow-ups Andy asked.
+  // Answer text in order, including any AI follow-ups Caddie asked.
   C.qaParts = function (q) {
     const parts = [];
     if (q.segments && q.segments.length) {
       q.segments.forEach((sg) => {
         if (sg.answer) parts.push({ who: 'you', text: sg.answer });
         if (sg.typed) parts.push({ who: 'you', text: sg.typed, typed: true });
-        parts.push({ who: 'andy', text: sg.followUp });
+        parts.push({ who: 'caddie', text: sg.followUp });
       });
       if (q.tail) parts.push({ who: 'you', text: q.tail });
       if (q.typedTail) parts.push({ who: 'you', text: q.typedTail, typed: true });
@@ -115,10 +115,10 @@
   C.transcriptText = function (s) {
     const lines = [`Caddie interview transcript`, `Role: ${s.setup.jobName || 'Custom questions'}`, `Date: ${fmtDate(s.createdAt)}`, `Mode: ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`, ''];
     s.metrics.perQuestion.forEach((q, i) => {
-      lines.push(`Q${i + 1} Andy: ${q.text}`);
+      lines.push(`Q${i + 1} Caddie: ${q.text}`);
       if (q.asked) {
         const parts = C.qaParts(q);
-        parts.forEach((p) => lines.push(p.who === 'andy' ? `Andy (AI follow-up): ${p.text}` : `You${p.typed ? ' (typed)' : ''}: ${p.text}`));
+        parts.forEach((p) => lines.push(p.who === 'caddie' ? `Caddie (AI follow-up): ${p.text}` : `You${p.typed ? ' (typed)' : ''}: ${p.text}`));
         if (!parts.length) lines.push('You: (no transcript captured)');
       } else lines.push('(not asked)');
       lines.push('');
@@ -135,7 +135,7 @@
 <p>${['speech', 'face', 'body', 'qa'].map((k) => `<span class="s"><b>${{ speech: 'Speech', face: 'Face', body: 'Body language', qa: 'Answers' }[k]}</b>: ${s.scores[k] == null ? 'not measured' : `${s.scores[k]} (${L(s.scores[k])})`}</span>`).join('')}</p>
 <h3>Action items</h3><ol>${s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('')}</ol>
 ${block('Speech', d.speech)}${block('Face', d.face)}${block('Body language', d.body)}
-<h3>Questions and answers</h3>${s.metrics.perQuestion.map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q.text)}</p>${C.qaParts(q).map((p) => `<blockquote>${p.who === 'andy' ? '<i>Andy (AI follow-up):</i> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${q.asked ? 'No transcript captured.' : 'Not asked.'}</blockquote>`}`).join('')}
+<h3>Questions and answers</h3>${s.metrics.perQuestion.map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q.text)}</p>${C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<i>Caddie (AI follow-up):</i> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${q.asked ? 'No transcript captured.' : 'Not asked.'}</blockquote>`}`).join('')}
 <p style="color:#4A5261;font-size:.85rem">Measurements are practice indicators from on-device analysis, not predictions of hiring outcomes.${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? ' Some questions were written by AI (Anthropic\'s Claude).' : ''}</p></html>`;
   };
 

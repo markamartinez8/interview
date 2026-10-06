@@ -1,6 +1,6 @@
 # Caddie
 
-Practice interviews with Andy, a virtual interviewer, and get feedback on speech, eye contact and posture.
+Practice interviews with Caddie, a virtual interviewer, and get feedback on speech, eye contact and posture.
 Everything runs in the browser. Sessions, transcripts and recordings are stored on the user's device only.
 
 ## Run it
@@ -21,8 +21,9 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/js/interview.js`: green room and live interview room.
 - `public/js/analysis.js`: speech (Web Speech API + mic level), face and posture (MediaPipe) metrics.
 - `public/js/summary.js`: scoring, action items, downloadable reports.
-- `public/js/questions.js`: question generation without a paid AI.
-- `public/js/avatar.js`: Andy's animated face and the single browser voice.
+- `public/js/jd.js`: reads a pasted job description (responsibilities, requirements, skills, seniority, years).
+- `public/js/questions.js`: picks the 3 to 4 most relevant questions; "Walk me through your resume" is always first.
+- `public/js/avatar.js`: Caddie's animated face (lip-sync, blinks, gaze, nods) and the single browser voice.
 - `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
 
 Login is intentionally skipped for now.

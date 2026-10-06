@@ -136,7 +136,7 @@
       q.frames++;
       const fr = this.vision.face.detectForVideo(this.video, ts);
       if (fr.faceLandmarks && fr.faceLandmarks.length) {
-        q.faceF++; s.face = true;
+        q.faceF++; s.face = true; this.facePos = { x: fr.faceLandmarks[0][1].x, y: fr.faceLandmarks[0][1].y };
         const cat = {};
         for (const c of (fr.faceBlendshapes[0] || { categories: [] }).categories) cat[c.categoryName] = c.score;
         const g = (n) => cat[n] || 0;
@@ -155,7 +155,7 @@
         this.expr.push(smile + brow);
         if (this.lastFace) { const dm = Math.hypot(yaw - this.lastFace.yaw, pitch - this.lastFace.pitch); this.headDelta.push(dm); }
         this.lastFace = { yaw, pitch };
-      } else s.face = false;
+      } else { s.face = false; this.facePos = null; }
 
       if (this.vision.pose) {
         const pr = this.vision.pose.detectForVideo(this.video, ts + 0.5);

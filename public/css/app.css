@@ -94,7 +94,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus-ring)
 .mock { background: var(--room); border-radius: 18px; padding: .9rem; box-shadow: 0 24px 60px rgba(55, 48, 163, .25); }
 .mock-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 .mock-tile { aspect-ratio: 4 / 3; border-radius: 12px; position: relative; overflow: hidden; }
-.mock-tile.andy { background: radial-gradient(circle at 50% 30%, #4a4fb3, #1d2050 75%); }
+.mock-tile.caddie { background: radial-gradient(circle at 50% 30%, #4a4fb3, #1d2050 75%); }
 .mock-tile.you { background: linear-gradient(160deg, #20323b, #12202a); }
 .mock-tile svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .mock-tag { position: absolute; left: .5rem; bottom: .4rem; background: rgba(0,0,0,.55); color: #fff; font-size: .72rem; padding: .1rem .5rem; border-radius: 999px; }
@@ -173,8 +173,8 @@ table.logs th { color: var(--text-muted); font-size: .78rem; text-transform: upp
 .room-main > * { min-width: 0; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
 .tile { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: #1a1e2b; border: 1px solid rgba(255,255,255,.08); }
-.tile.andy { background: radial-gradient(circle at 50% 32%, #4a4fb3, #1b1e4d 78%); }
-.tile.andy svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tile.caddie { background: radial-gradient(circle at 50% 32%, #4a4fb3, #1b1e4d 78%); }
+.tile.caddie svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tile .tag { position: absolute; left: .6rem; bottom: .5rem; background: rgba(0,0,0,.6); color: #fff; font-size: .8rem; padding: .15rem .6rem; border-radius: 999px; }
 .tile .novideo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9aa1b5; text-align: center; padding: 1rem; }
 .eye { transform-box: fill-box; transform-origin: center; transition: transform .07s; }
@@ -202,7 +202,7 @@ table.logs th { color: var(--text-muted); font-size: .78rem; text-transform: upp
 .chat-log { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: .5rem; }
 .msg { max-width: 90%; padding: .45rem .7rem; border-radius: 12px; font-size: .92rem; background: rgba(255,255,255,.09); }
 .msg.me { align-self: flex-end; background: var(--color-primary); }
-.msg.andy { align-self: flex-start; }
+.msg.caddie { align-self: flex-start; }
 .chat-form { display: flex; gap: .4rem; padding: .6rem; border-top: 1px solid rgba(255,255,255,.1); }
 .chat-form input { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); color: #fff; }
 

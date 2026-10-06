@@ -28,7 +28,12 @@
     app.innerHTML = `${header(key, minimal)}<main id="view" tabindex="-1"></main>${minimal ? '' : footer}`;
     const view = document.getElementById('view');
     window.scrollTo(0, 0);
-    if (publicPages[key]) { view.innerHTML = C.views[publicPages[key]](); return; }
+    if (publicPages[key]) {
+      view.innerHTML = C.views[publicPages[key]]();
+      const hero = view.querySelector('#hero-avatar');
+      if (hero) { const av = new C.Avatar(hero); av.setListening(true); current = { destroy: () => av.destroy() }; }
+      return;
+    }
     const name = key === '/app/summary' ? 'summary' : appPages[key];
     if (name) { current = (await C.views[name](view, params)) || null; return; }
     view.innerHTML = '<section class="container page"><div class="empty"><strong>Page not found</strong><p style="margin-top:1rem"><a class="btn btn-primary" href="#/">Go home</a></p></div></section>';
