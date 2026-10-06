@@ -8,7 +8,7 @@
     const inApp = route.startsWith('/app');
     const link = (href, text, cur) => `<a href="${href}" ${cur ? 'aria-current="page"' : ''}>${text}</a>`;
     const nav = minimal ? '' : inApp
-      ? `${link('#/app', 'Dashboard', route === '/app')}${link('#/app/settings', 'Settings', route === '/app/settings')}<a class="btn btn-primary btn-sm" href="#/app/setup">Begin interview</a>`
+      ? `${link('#/app', 'Dashboard', route === '/app')}${link('#/app/settings', 'Settings', route === '/app/settings')}<a class="btn btn-primary btn-sm" href="#/app/setup">Begin session</a>`
       : `${link('#/value', 'Value', route === '/value')}${link('#/about', 'About', route === '/about')}${link('#/plans', 'Plans', route === '/plans')}<a class="btn btn-primary btn-sm" href="#/app">Start practicing</a>`;
     return `<header class="site-header"><div class="container"><a class="logo" href="${inApp ? '#/app' : '#/'}">${LOGO}Caddie</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
   }
