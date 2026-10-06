@@ -23,7 +23,8 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/js/summary.js`: scoring, action items, downloadable reports.
 - `public/js/jd.js`: reads a pasted job description (responsibilities, requirements, skills, seniority, years).
 - `public/js/questions.js`: picks the 3 to 4 most relevant questions; "Walk me through your resume" is always first.
-- `public/js/avatar.js`: Caddie's animated face (lip-sync, blinks, gaze, nods) and the single browser voice.
+- `public/js/avatar.js`: Caddie's animated face (lip-sync, blinks, gaze, nods).
+- `public/js/voice.js`: Caddie's voice: browser voices with sentence pacing and pronunciation fixes, or the optional natural voice (Kokoro, runs on-device; `public/vendor/kokoro.web.js`, Apache-2.0).
 - `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
 
 Login is intentionally skipped for now.
@@ -39,3 +40,9 @@ Off by default. When turned on, Caddie sends text (never video or audio) to Anth
 
 The model defaults to `claude-sonnet-5-5`; override with `CADDIE_MODEL`. The server listens on 127.0.0.1 only and rejects cross-origin requests.
 `CADDIE_FAKE_AI=1` returns canned responses for testing without a key.
+
+## Voices
+
+Settings -> "Caddie's voice" (or the checkbox in the green room) switches between the standard browser voice and the natural voice.
+The natural voice downloads about 90 MB from Hugging Face on first use, is cached by the browser, and then runs entirely on this device.
+If it cannot load, Caddie falls back to the browser voice automatically.

@@ -146,6 +146,7 @@
     // ----- behaviour inputs -----
     setSpeaking(on, text) {
       this.mode.speaking = on;
+      if (!on) this.env = null;
       if (on) { this.text = text || ''; this.speechStart = performance.now(); this.anchor = null; this.cps = 14; }
     }
     // Called by the speech engine at each word; keeps the lips in step with the voice.
@@ -156,6 +157,12 @@
         this.cps = clamp(this.cps * 0.6 + inst * 0.4, 7, 24);
       }
       this.anchor = { idx: charIndex, t: now }; this.emph = 1;
+    }
+    // Exact timing from a rendered audio clip: lets the lips follow the real voice.
+    setSpeechTiming(text, durationSec, env) {
+      const now = performance.now();
+      this.text = text; this.anchor = { idx: 0, t: now }; this.cps = clamp(text.length / Math.max(0.3, durationSec), 6, 30);
+      this.env = env ? { hop: env.hop, data: env.data, t0: now } : null;
     }
     setListening(on) { this.mode.listening = on; }
     setUserSpeaking(on) { this.mode.userSpeaking = on; }
@@ -172,7 +179,12 @@
       const [a, b, c] = viseme(this.text[i] || ' ');
       const [a2, b2, c2] = viseme(this.text[i + 1] || ' ');
       const f = idx - i; // blend toward the next sound
-      return [a + (a2 - a) * f * 0.5, b + (b2 - b) * f * 0.5, c + (c2 - c) * f * 0.5];
+      let open = a + (a2 - a) * f * 0.5;
+      if (this.env) { // follow the real loudness: closed in pauses, wider on stressed syllables
+        const k = this.env.data[Math.floor((now - this.env.t0) / this.env.hop)] ?? 0;
+        open *= clamp(0.15 + 0.95 * k, 0, 1.15);
+      }
+      return [open, b + (b2 - b) * f * 0.5, c + (c2 - c) * f * 0.5];
     }
 
     frame(now) {
@@ -263,58 +275,5 @@
     destroy() { cancelAnimationFrame(this.raf); }
   }
 
-  function score(v) {
-    let sc = 0;
-    if (/^en[-_]US/i.test(v.lang)) sc += 4; else if (/^en/i.test(v.lang)) sc += 2; else return -1;
-    if (/natural|neural|online/i.test(v.name)) sc += 12;
-    if (/premium|enhanced|siri/i.test(v.name)) sc += 10;
-    if (/google/i.test(v.name)) sc += 6;
-    if (/guy|davis|andrew|brian|christopher|eric|roger|steffan|david|daniel|alex|aaron|fred|male/i.test(v.name)) sc += 5;
-    if (/female|zira|aria|jenny|samantha|karen|moira|susan|hazel|victoria/i.test(v.name)) sc -= 8;
-    return sc;
-  }
-
-  const voice = {
-    supported: () => 'speechSynthesis' in window,
-    async ready() {
-      if (!voice.supported()) return [];
-      if (!speechSynthesis.getVoices().length) {
-        await new Promise((res) => {
-          const done = () => { speechSynthesis.removeEventListener('voiceschanged', done); res(); };
-          speechSynthesis.addEventListener('voiceschanged', done);
-          setTimeout(done, 2000);
-        });
-      }
-      return speechSynthesis.getVoices();
-    },
-    async list() { return (await voice.ready()).filter((v) => score(v) >= 0).sort((a, b) => score(b) - score(a)); },
-    // One voice for the whole interview: the saved choice if still installed, otherwise the best-ranked English voice.
-    async choose(savedURI) {
-      const all = await voice.list();
-      return all.find((v) => v.voiceURI === savedURI) || all[0] || null;
-    },
-    // Resolves when finished. If the browser never starts speaking, an estimated duration stands in.
-    speak(text, chosen, avatar) {
-      return new Promise((resolve) => {
-        let done = false, timer;
-        const words = text.split(/\s+/).length;
-        const finish = () => { if (done) return; done = true; clearTimeout(timer); avatar && avatar.setSpeaking(false); resolve(); };
-        avatar && avatar.setSpeaking(true, text);
-        if (!voice.supported()) { timer = setTimeout(finish, words * 400 + 1500); return; }
-        try {
-          const u = new SpeechSynthesisUtterance(text);
-          if (chosen) { u.voice = chosen; u.lang = chosen.lang; } else u.lang = 'en-US';
-          u.rate = 0.95; u.pitch = 1;
-          u.onstart = () => { clearTimeout(timer); avatar && avatar.setSpeaking(true, text); timer = setTimeout(finish, words * 700 + 8000); };
-          u.onboundary = (ev) => avatar && avatar.boundary(ev.charIndex || 0);
-          u.onend = finish; u.onerror = finish;
-          timer = setTimeout(finish, 3000 + words * 400);
-          speechSynthesis.speak(u);
-        } catch { timer = setTimeout(finish, words * 400 + 1500); }
-      });
-    },
-    cancel() { try { speechSynthesis.cancel(); } catch { /* none */ } },
-  };
-
-  C.Avatar = Avatar; C.voice = voice;
+  C.Avatar = Avatar;
 })(window.Caddie);

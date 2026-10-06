@@ -31,7 +31,7 @@ window.Caddie = window.Caddie || { views: {} };
   }
 
   const PROFILE_DEFAULT = { name: '', email: '', targetRole: '' };
-  const PREFS_DEFAULT = { mode: 'practice', voiceURI: '', silenceSec: 5, graceSec: 0, aiConsent: false };
+  const PREFS_DEFAULT = { mode: 'practice', voiceURI: '', silenceSec: 5, graceSec: 0, aiConsent: false, voiceEngine: 'browser', naturalVoice: 'am_michael', voiceSpeed: 1 };
 
   C.store = {
     getProfile: () => ({ ...PROFILE_DEFAULT, ...LS.get('caddie.profile', {}) }),

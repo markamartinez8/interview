@@ -178,8 +178,11 @@
           <div class="field"><label for="p-mode">Default mode</label><select id="p-mode"><option value="practice" ${prefs.mode === 'practice' ? 'selected' : ''}>Practice</option><option value="mock" ${prefs.mode === 'mock' ? 'selected' : ''}>Mock</option></select></div>
           <div class="field"><label for="p-sil">Seconds of silence before Caddie moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
           <div class="field"><label for="p-grace">Extra seconds to start your answer</label><input type="number" id="p-grace" min="0" max="30" value="${prefs.graceSec || 0}"><span class="hint">Added to the silence window only before you say your first word. 0 keeps it the same throughout.</span></div>
-          <div class="field"><label for="p-voice">Caddie's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
-          <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test" disabled>Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
+          <div class="field"><label for="p-engine">Caddie's voice</label><select id="p-engine"><option value="browser" ${prefs.voiceEngine !== 'natural' ? 'selected' : ''}>Standard (your browser's voice)</option><option value="natural" ${prefs.voiceEngine === 'natural' ? 'selected' : ''}>Natural (more human, one-time ~90 MB download)</option></select><span class="hint">The natural voice is generated on this device and stored by your browser after the first download. Nothing is sent anywhere.</span></div>
+          <div class="field" id="f-nvoice"><label for="p-nvoice">Natural voice</label><select id="p-nvoice">${C.voice.naturalVoices.map(([id, name]) => `<option value="${id}" ${id === prefs.naturalVoice ? 'selected' : ''}>${name}</option>`).join('')}</select></div>
+          <div class="field" id="f-bvoice"><label for="p-voice">Standard voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
+          <div class="field"><label for="p-speed">Speaking speed: <span id="p-speed-v">${(+prefs.voiceSpeed || 1).toFixed(2)}x</span></label><input type="range" id="p-speed" min="0.85" max="1.15" step="0.05" value="${+prefs.voiceSpeed || 1}"></div>
+          <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test">Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
         <div class="card"><div class="card-title"><h3>Session logs</h3><span class="muted small">${sessions.length} saved on this device</span></div>
           ${sessions.length ? `<div class="scroll-x"><table class="logs"><thead><tr><th>Date</th><th>Role</th><th>Scores</th><th>Files</th><th></th></tr></thead><tbody>${sessions.map((s) => `<tr><td>${fmtDate(s.createdAt)}<br><span class="muted small">${fmtDur(s.metrics.duration)}</span></td><td>${esc(s.setup.jobName || 'Custom')}<br><span class="muted small">${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}</span></td><td>${scoreChips(s.scores)}</td>
             <td><a href="#/app/summary/${s.id}">Summary</a><br><a href="#" data-rec="${s.id}" ${s.hasRecording ? '' : 'hidden'}>Recording</a><br><a href="#" data-tr="${s.id}">Transcript</a></td><td><button class="btn btn-ghost btn-sm" data-del="${s.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No sessions yet</strong>Completed interviews are listed here with their summary, recording and transcript.</div>'}</div></div>
@@ -198,15 +201,30 @@
     $('#f-profile').addEventListener('submit', (e) => {
       e.preventDefault();
       C.store.setProfile({ name: $('#p-name').value.trim(), email: $('#p-email').value.trim(), targetRole: $('#p-role').value.trim() });
-      C.store.setPrefs({ ...C.store.getPrefs(), mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value });
+      C.store.setPrefs({ ...C.store.getPrefs(), mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value, voiceEngine: $('#p-engine').value, naturalVoice: $('#p-nvoice').value, voiceSpeed: +$('#p-speed').value || 1 });
       $('#p-msg').textContent = 'Saved.'; setTimeout(() => { const m = $('#p-msg'); if (m) m.textContent = ''; }, 2500);
     });
     voicesP.then((list) => {
       voices = list; const sel = $('#p-voice'); if (!sel) return;
       sel.innerHTML = list.length ? list.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === prefs.voiceURI ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('') : '<option value="">No voices available in this browser</option>';
-      $('#p-test').disabled = !list.length;
     });
-    $('#p-test').addEventListener('click', async () => { const v = voices.find((x) => x.voiceURI === $('#p-voice').value) || voices[0]; C.voice.cancel(); await C.voice.speak("Hi, I'm Caddie. Ready when you are.", v); });
+    const syncVoiceFields = () => { const nat = $('#p-engine').value === 'natural'; $('#f-nvoice').hidden = !nat; $('#f-bvoice').hidden = nat; };
+    $('#p-engine').addEventListener('change', syncVoiceFields); syncVoiceFields();
+    $('#p-speed').addEventListener('input', () => { $('#p-speed-v').textContent = `${(+$('#p-speed').value).toFixed(2)}x`; });
+    $('#p-test').addEventListener('click', async () => {
+      const msg = $('#p-msg'), say = "Hi, I'm Caddie. Thanks for joining me today. Let's start with your background.";
+      C.voice.cancel();
+      let engine = $('#p-engine').value;
+      if (engine === 'natural' && !C.voice.naturalState().ready) {
+        $('#p-test').disabled = true; msg.textContent = 'Downloading the natural voice… 0%';
+        const ok = await C.voice.loadNatural((pc) => { msg.textContent = `Downloading the natural voice… ${pc}%`; });
+        $('#p-test').disabled = false;
+        if (!ok) { msg.textContent = 'Could not load the natural voice. Check your internet connection. Playing the standard voice instead.'; engine = 'browser'; } else msg.textContent = '';
+      }
+      C.voice.configure({ engine, naturalVoice: $('#p-nvoice').value, speed: +$('#p-speed').value });
+      const v = voices.find((x) => x.voiceURI === $('#p-voice').value) || voices[0] || null;
+      await C.voice.speak(say, v, null);
+    });
     root.addEventListener('click', async (e) => {
       const rec = e.target.closest('[data-rec]'), tr = e.target.closest('[data-tr]'), del = e.target.closest('[data-del]');
       if (rec) { e.preventDefault(); const b = await C.store.getRecording(rec.dataset.rec); if (b) C.util.download(`caddie-recording.${/mp4/.test(b.type) ? 'mp4' : 'webm'}`, b); }

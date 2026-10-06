@@ -28,6 +28,7 @@
             <li><span>Camera</span><span id="ck-cam">${statusChip('Waiting', 'na')}</span></li><li><span>Microphone</span><span id="ck-mic">${statusChip('Waiting', 'na')}</span></li>
             <li><span>Caddie's voice</span><span id="ck-voice">${statusChip('Loading', 'na')}</span></li><li><span>Face and posture analysis</span><span id="ck-vis">${statusChip('Waiting', 'na')}</span></li>
             <li><span>Speech transcript</span><span id="ck-sr">${statusChip(window.SpeechRecognition || window.webkitSpeechRecognition ? 'Supported' : 'Not in this browser', window.SpeechRecognition || window.webkitSpeechRecognition ? 'good' : 'low')}</span></li></ul></div>
+          <div class="card stack" id="voice-card"><label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="nat" style="margin-top:.25rem"><span><b>Use the natural voice</b><br><span class="small muted">More human-sounding. One-time download of about 90 MB, then it is stored on this device and the voice is generated here.</span></span></label><div class="meter" id="nat-meter" hidden><div></div></div><div class="small muted" id="nat-status" role="status"></div></div>
           <div class="card stack" id="ai-card" hidden></div>
           <div class="card stack"><p class="small muted">Your video is recorded on this device only so you can review it afterward. Nothing is uploaded.</p><div id="prep-err" class="error-text" role="alert"></div>
             <div class="row"><button class="btn btn-primary btn-lg" id="join" disabled>Join interview</button><button class="btn btn-ghost" id="retry" hidden>Try again</button><button class="btn btn-ghost" id="textonly" hidden>Continue with typed answers</button><a class="btn btn-ghost" href="#/app/setup">Back to setup</a></div></div>
@@ -58,12 +59,36 @@
         if (vs === 'ready') set('#ck-vis', a.vision.pose ? 'Ready' : 'Face only', 'good'); else if (vs === 'loading') set('#ck-vis', 'Loading…', 'ok');
         else if (vs === 'unavailable') set('#ck-vis', 'Unavailable', 'low'); else if (vs === 'nocamera') set('#ck-vis', 'Needs camera', 'na');
       }, 150);
-      $('#join').disabled = false;
+      S.mediaOk = true; updateJoin();
     }
     function mediaFailed(msg) { $('#prep-err').textContent = msg; $('#retry').hidden = false; $('#textonly').hidden = false; set('#ck-cam', 'Off', 'low'); set('#ck-mic', 'Off', 'low'); $('#pv-msg').textContent = 'Camera and microphone are off.'; }
     $('#retry').addEventListener('click', requestMedia);
-    $('#textonly').addEventListener('click', () => { S.textOnly = true; $('#prep-err').textContent = ''; $('#retry').hidden = true; $('#textonly').hidden = true; set('#ck-cam', 'Skipped', 'ok'); set('#ck-mic', 'Typing instead', 'ok'); set('#ck-vis', 'Needs camera', 'na'); $('#join').disabled = false; });
-    C.voice.choose(prefs.voiceURI).then((v) => { S.voice = v; set('#ck-voice', v ? v.name.replace(/^Microsoft |^Google /, '') : 'Captions only', v ? 'good' : 'ok'); });
+    $('#textonly').addEventListener('click', () => { S.textOnly = true; $('#prep-err').textContent = ''; $('#retry').hidden = true; $('#textonly').hidden = true; set('#ck-cam', 'Skipped', 'ok'); set('#ck-mic', 'Typing instead', 'ok'); set('#ck-vis', 'Needs camera', 'na'); S.mediaOk = true; updateJoin(); });
+    const updateJoin = () => { const j = $('#join'); if (j) j.disabled = !(S.mediaOk && !S.natLoading); };
+    const natEl = $('#nat'), natBar = $('#nat-meter'), natSt = $('#nat-status');
+    natEl.checked = prefs.voiceEngine === 'natural';
+    async function applyVoice() {
+      const p = C.store.getPrefs();
+      if (natEl.checked) {
+        C.store.setPrefs({ ...p, voiceEngine: 'natural' });
+        if (!C.voice.naturalState().ready) {
+          S.natLoading = true; updateJoin(); natBar.hidden = false; natBar.firstElementChild.style.width = '0%'; natSt.textContent = 'Downloading the natural voice… 0%';
+          const ok = await C.voice.loadNatural((pc) => { if (natBar.isConnected) { natBar.firstElementChild.style.width = `${pc}%`; natSt.textContent = `Downloading the natural voice… ${pc}%`; } });
+          if (!natBar.isConnected) return;
+          S.natLoading = false; natBar.hidden = true;
+          if (ok) natSt.textContent = 'Natural voice ready.';
+          else { natEl.checked = false; natSt.textContent = 'Could not load the natural voice. Check your internet connection. Caddie will use your browser voice instead.'; C.store.setPrefs({ ...C.store.getPrefs(), voiceEngine: 'browser' }); }
+        } else natSt.textContent = 'Natural voice ready.';
+      } else { S.natLoading = false; natBar.hidden = true; natSt.textContent = ''; C.store.setPrefs({ ...p, voiceEngine: 'browser' }); }
+      const pr = C.store.getPrefs();
+      C.voice.configure({ engine: pr.voiceEngine, naturalVoice: pr.naturalVoice, speed: pr.voiceSpeed });
+      updateJoin();
+      const paint = (v) => { const now = C.voice.engine; set('#ck-voice', now === 'natural' ? 'Natural' : v ? v.name.replace(/^Microsoft |^Google /, '') : 'Captions only', now === 'natural' || v ? 'good' : 'ok'); };
+      paint(S.voice);
+      if (!S.voice) { S.voice = await C.voice.choose(pr.voiceURI); paint(S.voice); }
+    }
+    natEl.addEventListener('change', applyVoice);
+    applyVoice();
     C.ai.status().then((info) => {
       const card = $('#ai-card'); if (!card || setup.source !== 'ai') return;
       card.hidden = false;
@@ -113,6 +138,7 @@
       S.t0 = performance.now();
       wireControls(practice);
       if (practice) every(updateCues, 1000);
+      C.voice.prefetch(introText());
       runInterview(++S.run, practice);
       void prevStream;
     }
@@ -225,11 +251,15 @@
       S.asked.add(i); S.followUps++; S.analyzer.addFollowUp(i, f);
       return f;
     }
-    async function runInterview(run, practice) {
+    const introText = () => {
+      const practice = setup.mode === 'practice';
       const role = setup.jobName ? ` about the ${setup.jobName} position` : '';
       const how = S.textOnly ? 'Type your answer in the chat, then press Next question.' : `When you have been quiet for about ${prefs.silenceSec} seconds, I will move on.`;
       const modeLine = practice ? 'This is practice mode, so you will see live tips on the side, and you can pause or skip.' : 'This is a mock interview, so no tips until the end.';
-      await say(`Hi, I am Caddie, your AI interviewer. Thanks for joining me today. I will ask you ${questions.length} questions${role}${S.useFollowups ? ', and maybe a follow-up or two' : ''}. ${modeLine} ${how} Let's get started.`);
+      return `Hi, I am Caddie, your AI interviewer. Thanks for joining me today. I will ask you ${questions.length} questions${role}${S.useFollowups ? ', and maybe a follow-up or two' : ''}. ${modeLine} ${how} Let's get started.`;
+    };
+    async function runInterview(run, practice) {
+      await say(introText());
       let i = 0;
       const transitions = ['Thank you. Next question.', 'Okay, got it. Moving on.', 'Great. Here is the next one.', 'Thanks for that. Let us continue.'];
       let fresh = true;
@@ -244,6 +274,7 @@
         S.analyzer && S.analyzer.selectQuestion(i);
         await say(lead + questions[i].text, questions[i].text);
         if (run !== S.run) return;
+        if (i + 1 < questions.length) C.voice.prefetch(`${transitions[(i + 1) % transitions.length]} ${questions[i + 1].text}`);
         if (!S.nav && !S.paused) {
           let again = true;
           while (again && run === S.run) {
@@ -269,7 +300,7 @@
     async function finishInterview(complete) {
       if (S.finishing) return; S.finishing = true;
       const run = S.run; S.run++;
-      C.voice.cancel(); S.timers.forEach(clearInterval);
+      C.voice.shutdown(); S.timers.forEach(clearInterval);
       const dur = elapsed();
       if (S.avatar) S.avatar.destroy();
       root.innerHTML = '<section class="container page"><div class="card" style="max-width:520px;margin:3rem auto;text-align:center"><h2>Putting your summary together…</h2><p class="muted">This takes a few seconds.</p></div></section>';
@@ -297,7 +328,7 @@
 
     return {
       destroy() {
-        S.run++; S.finishing = true; C.voice.cancel(); S.timers.forEach(clearInterval);
+        S.run++; S.finishing = true; C.voice.shutdown(); S.timers.forEach(clearInterval);
         if (S.avatar) S.avatar.destroy();
         try { S.recorder && S.recorder.state !== 'inactive' && S.recorder.stop(); } catch { /* ignore */ }
         if (S.analyzer) S.analyzer.stop();
