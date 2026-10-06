@@ -37,7 +37,7 @@
   const pct = (n, d) => (d ? Math.round((n / d) * 100) : null);
 
   const blank = () => ({ text: '', typed: '', startedAt: 0, endedAt: 0, speakMs: 0, voiceBursts: 0, pauses: 0, longPauses: 0,
-    frames: 0, faceF: 0, eyeF: 0, smileF: 0, poseF: 0, uprightF: 0, tiltF: 0, slouchF: 0, leanF: 0, motion: 0, motionN: 0, attempts: 0 });
+    frames: 0, faceF: 0, eyeF: 0, smileF: 0, poseF: 0, uprightF: 0, tiltF: 0, slouchF: 0, leanF: 0, motion: 0, motionN: 0, attempts: 0, segments: [], segStart: 0, typedStart: 0 });
 
   class Analyzer {
     constructor({ stream, video, hasVideo }) {
@@ -205,6 +205,8 @@
     }
     endAnswer() { if (this.cur >= 0) { this.quest.endedAt = performance.now(); } this.answering = false; this.interim = ''; }
     selectQuestion(i) { this.cur = i; }
+    // Record an AI follow-up so the transcript keeps answer / follow-up / answer in order.
+    addFollowUp(i, text) { const q = this.q[i] || (this.q[i] = blank()); q.segments.push({ answer: q.text.slice(q.segStart).trim(), typed: q.typed.slice(q.typedStart).trim(), followUp: text }); q.segStart = q.text.length; q.typedStart = q.typed.length; }
     addTyped(text) { const q = this.quest; q.typed += (q.typed ? ' ' : '') + text; this.lastVoiceAt = performance.now(); }
 
     // Rolling window used for live cues (last ~9 seconds).
@@ -249,7 +251,7 @@
         Object.keys(T).forEach((k) => { T[k] += q[k]; });
         const spoken = q.text ? q.text.split(/\s+/).length : 0;
         per.push({
-          index: i, text: qq.text, asked: true, answer: q.text, typed: q.typed, words: w, fillers: f.length,
+          index: i, text: qq.text, asked: true, answer: q.text, typed: q.typed, segments: q.segments, tail: q.text.slice(q.segStart).trim(), typedTail: q.typed.slice(q.typedStart).trim(), words: w, fillers: f.length,
           seconds: q.startedAt ? Math.round((q.endedAt - q.startedAt) / 1000) : 0, speakSec: Math.round(q.speakMs / 1000),
           wpm: q.speakMs > 5000 && spoken ? Math.round(spoken / (q.speakMs / 60000)) : null, pauses: q.pauses, longPauses: q.longPauses,
           eyePct: pct(q.eyeF, q.faceF), uprightPct: pct(q.uprightF, q.poseF),

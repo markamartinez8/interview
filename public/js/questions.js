@@ -108,6 +108,7 @@
       out.push({ text: CLOSER, kind: 'closer' });
       return { questions: out.slice(0, 9), usedJd: fromJd > 0, roleFamily: !!fam };
     },
+    fromAI(list) { return [{ text: OPENER, kind: 'opener' }, ...list.map((text) => ({ text, kind: 'ai' })), { text: CLOSER, kind: 'closer' }]; },
     staticList(lines, withOpener) {
       const qs = lines.map((l) => l.trim()).filter(Boolean).map((text) => ({ text, kind: 'custom' }));
       return withOpener && !qs.some((q) => /tell me about yourself|walk me through your (resume|cv)/i.test(q.text)) ? [{ text: OPENER, kind: 'opener' }, ...qs] : qs;

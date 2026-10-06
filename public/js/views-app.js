@@ -30,9 +30,10 @@
   };
 
   // ---------------- Setup ----------------
-  V.setup = (root) => {
+  V.setup = async (root) => {
     const prefs = C.store.getPrefs(), profile = C.store.getProfile(), last = C.store.getLastSetup() || {};
-    const S = { step: 1, source: last.source || 'ai', mode: last.mode || prefs.mode, jobName: last.jobName || profile.targetRole || '', jd: last.jd || '', custom: last.custom || '', withOpener: last.withOpener !== false, questions: [] };
+    await C.ai.status();
+    const S = { aiQ: !!(prefs.aiConsent && C.ai.info.available), qSource: 'templates', step: 1, source: last.source || 'ai', mode: last.mode || prefs.mode, jobName: last.jobName || profile.targetRole || '', jd: last.jd || '', custom: last.custom || '', withOpener: last.withOpener !== false, questions: [] };
     const steps = ['Choose', 'Details', 'Review'];
     const frame = (inner) => `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">New interview</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Set up your interview</h1></div></div>
       <div class="wizard-steps">${steps.map((n, i) => `<span class="chip ${i + 1 === S.step ? 'current' : ''}">${i + 1}. ${n}</span>`).join('')}</div><div class="card form-card">${inner}</div></section>`;
@@ -52,6 +53,7 @@
         root.innerHTML = frame(S.source === 'ai' ? `<div class="stack">
           <div class="field"><label for="job">Job title <span class="req">*</span></label><input type="text" id="job" value="${esc(S.jobName)}" placeholder="e.g. Product Manager"></div>
           <div class="field"><label for="jd">Job description (optional)</label><textarea id="jd" placeholder="Paste the posting here. Caddie looks for 'What you'll be doing' and 'What we're looking for' sections.">${esc(S.jd)}</textarea><span class="hint">Pasting is the only option for now. Links to job posts cannot be read.</span></div>
+          ${C.ai.info.available ? `<div class="callout stack" style="gap:.5rem"><label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-q" ${S.aiQ ? 'checked' : ''} style="margin-top:.25rem"><span><b>Use Claude (AI) to write my questions</b><br><span class="small">${C.disclosure.questions}</span></span></label></div>` : '<div class="callout small">Questions will be built from templates. To have Claude write them, add an Anthropic key in <a href="#/app/settings">Settings</a>.</div>'}
           <div class="error-text" id="err" role="alert"></div><div class="actions" style="margin-top:0"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary" id="next" ${S.jobName.trim() ? '' : 'disabled'}>Preview questions</button></div></div>`
           : `<div class="stack">
           <div class="field"><label for="qs">Your questions <span class="req">*</span></label><textarea id="qs" style="min-height:200px" placeholder="One question per line">${esc(S.custom)}</textarea><span class="hint">One per line.</span></div>
@@ -64,23 +66,37 @@
           const job = root.querySelector('#job'), jd = root.querySelector('#jd');
           job.addEventListener('input', () => { S.jobName = job.value; nextBtn.disabled = !job.value.trim(); });
           jd.addEventListener('input', () => { S.jd = jd.value; });
-          nextBtn.addEventListener('click', () => { S.questions = C.questions.generate({ jobName: S.jobName.trim(), jd: S.jd }).questions; S.usedJd = S.jd.trim().length > 40; S.step = 3; render(); });
+          const aiq = root.querySelector('#ai-q');
+          if (aiq) aiq.addEventListener('change', () => { S.aiQ = aiq.checked; C.store.setPrefs({ ...C.store.getPrefs(), aiConsent: aiq.checked }); });
+          nextBtn.addEventListener('click', async () => {
+            const role = S.jobName.trim();
+            S.usedJd = S.jd.trim().length > 40;
+            const fallback = () => C.questions.generate({ jobName: role, jd: S.jd }).questions;
+            if (S.aiQ && C.ai.info.available) {
+              nextBtn.disabled = true; nextBtn.textContent = 'Writing questions with Claude…';
+              const list = await C.ai.questions(role, S.jd);
+              if (!root.isConnected) return;
+              if (list) { S.questions = C.questions.fromAI(list); S.qSource = 'claude'; } else { S.questions = fallback(); S.qSource = 'fallback'; }
+            } else { S.questions = fallback(); S.qSource = 'templates'; }
+            S.step = 3; render();
+          });
         } else {
           const qs = root.querySelector('#qs'), jc = root.querySelector('#jobc'), op = root.querySelector('#opener');
           qs.addEventListener('input', () => { S.custom = qs.value; nextBtn.disabled = !qs.value.trim(); });
           jc.addEventListener('input', () => { S.jobName = jc.value; }); op.addEventListener('change', () => { S.withOpener = op.checked; });
-          nextBtn.addEventListener('click', () => { S.questions = C.questions.staticList(S.custom.split(/\r?\n/), S.withOpener); S.step = 3; render(); });
+          nextBtn.addEventListener('click', () => { S.questions = C.questions.staticList(S.custom.split(/\r?\n/), S.withOpener); S.qSource = 'static'; S.step = 3; render(); });
         }
       } else {
         const list = () => S.questions.map((q, i) => `<li class="qrow" style="display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;padding:.5rem 0;border-top:1px solid var(--border-default)"><span>${esc(q.text)}</span><button class="btn btn-ghost btn-sm" data-rm="${i}" aria-label="Remove question ${i + 1}">Remove</button></li>`).join('');
         root.innerHTML = frame(`<div class="stack"><p class="muted">${S.questions.length} questions for <b>${esc(S.jobName || 'your interview')}</b>. Andy asks them in this order. Remove any you do not want.</p>
           ${S.source === 'ai' && S.jd.trim() && !S.usedJd ? '' : ''}${S.source === 'ai' && S.jd.trim().length > 40 && !S.questions.some((q) => q.text.startsWith('This role') || q.text.startsWith("We're looking") || q.text.startsWith('The job description')) ? '<div class="callout warn">We could not find responsibilities or requirements in that job description, so the questions come from the job title.</div>' : ''}
+          ${S.qSource === 'claude' ? '<div class="callout">These questions were written by Claude, an AI from Anthropic.</div>' : S.qSource === 'fallback' ? '<div class="callout warn">Claude could not be reached, so these questions come from templates.</div>' : ''}
           <ol id="qlist" style="margin:0;padding-left:1.2rem">${list()}</ol>
           <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary btn-lg" id="go" ${S.questions.length ? '' : 'disabled'}>Go to green room</button></div></div>`);
         root.querySelector('#back').addEventListener('click', () => { S.step = 2; render(); });
         root.querySelector('#qlist').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (!b) return; S.questions.splice(+b.dataset.rm, 1); render(); });
         root.querySelector('#go').addEventListener('click', () => {
-          const setup = { source: S.source, mode: S.mode, jobName: S.jobName.trim(), jd: S.jd, custom: S.custom, withOpener: S.withOpener, questions: S.questions };
+          const setup = { source: S.source, mode: S.mode, jobName: S.jobName.trim(), jd: S.jd, custom: S.custom, withOpener: S.withOpener, questions: S.questions, qSource: S.qSource };
           C.store.setLastSetup({ source: S.source, mode: S.mode, jobName: S.jobName, jd: S.jd, custom: S.custom, withOpener: S.withOpener });
           C.pending = setup; location.hash = '#/app/interview';
         });
@@ -99,13 +115,14 @@
     const caps = m.capabilities;
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Summary</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${esc(s.setup.jobName || 'Custom questions')}</h1>
-        <div class="muted">${fmtDate(s.createdAt)} · ${fmtDur(m.duration)} · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode${s.completed ? '' : ' · ended early'}</div></div>
+        <div class="muted">${fmtDate(s.createdAt)} · ${fmtDur(m.duration)} · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode${s.completed ? '' : ' · ended early'}</div>
+        ${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? `<div class="row" style="gap:.4rem">${s.ai.qSource === 'claude' ? '<span class="badge">Questions written by Claude (AI)</span>' : ''}${s.ai.followUps ? `<span class="badge">${s.ai.followUps} AI follow-up${s.ai.followUps > 1 ? 's' : ''}</span>` : ''}</div>` : ''}</div>
         <div class="row"><button class="btn btn-ghost" id="dl-sum">Download summary</button><button class="btn btn-ghost" id="dl-rec" ${s.hasRecording ? '' : 'disabled'}>Download recording</button><button class="btn btn-ghost" id="dl-tr">Download transcript</button></div></div>
       ${!caps.speech || !caps.vision ? `<div class="callout warn" style="margin-bottom:1rem">${[!caps.speech ? 'Speech measures need speech recognition, which this browser did not provide. Chrome or Edge work best.' : '', caps.camera && !caps.vision ? 'Face and posture analysis could not load.' : '', !caps.camera ? 'No camera was used, so face and posture were not measured.' : ''].filter(Boolean).join(' ')}</div>` : ''}
       <div class="score-grid">
         ${card('Speech style', 'speech', d.speech)}${card('Facial expression', 'face', d.face, 'Eye contact drives this score. Smiling and expressiveness are shown for information.')}${card('Body language', 'body', d.body)}</div>
       <div class="dash-grid"><div class="stack">
-        <div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? `<blockquote>${esc(q.answer || q.typed || (caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'))}</blockquote>` : ''}</div>`).join('')}</div></div>
+        <div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'andy' ? '<b>Andy (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>
         <div class="stack"><div class="card"><div class="card-title"><h3>Action items</h3></div><ol class="actions-list">${s.actions.length ? s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('') : '<li>Not enough data was captured to suggest changes.</li>'}</ol></div>
           <div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">Same questions</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>
           <p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring outcomes.</p></div></div></section>`;
@@ -122,6 +139,7 @@
   V.settings = async (root) => {
     const profile = C.store.getProfile(), prefs = C.store.getPrefs();
     const sessions = await C.store.listSessions();
+    const ai = await C.ai.status();
     let voices = [];
     const voicesP = C.voice.list();
     root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Settings</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Your account</h1></div></div>
@@ -139,13 +157,21 @@
           ${sessions.length ? `<div class="scroll-x"><table class="logs"><thead><tr><th>Date</th><th>Role</th><th>Scores</th><th>Files</th><th></th></tr></thead><tbody>${sessions.map((s) => `<tr><td>${fmtDate(s.createdAt)}<br><span class="muted small">${fmtDur(s.metrics.duration)}</span></td><td>${esc(s.setup.jobName || 'Custom')}<br><span class="muted small">${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}</span></td><td>${scoreChips(s.scores)}</td>
             <td><a href="#/app/summary/${s.id}">Summary</a><br><a href="#" data-rec="${s.id}" ${s.hasRecording ? '' : 'hidden'}>Recording</a><br><a href="#" data-tr="${s.id}">Transcript</a></td><td><button class="btn btn-ghost btn-sm" data-del="${s.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No sessions yet</strong>Completed interviews are listed here with their summary, recording and transcript.</div>'}</div></div>
       <div class="stack"><div class="card"><h3 style="margin-bottom:.6rem">Credits and subscription</h3><dl class="kv"><dt>Plan</dt><dd>Preview (free)</dd><dt>Sessions used</dt><dd>${sessions.length}</dd><dt>Limit</dt><dd>None</dd></dl><p class="small muted" style="margin-top:.7rem">Paid plans are not available yet. See <a href="#/plans">Plans</a>.</p></div>
+        <div class="card stack" id="ai-card"><h3>AI features</h3>
+          ${ai.offline ? '<p class="small muted">AI features need the Caddie server on your computer (<code>npm start</code>). They are not available here.</p>'
+            : ai.available ? `<p class="small"><span class="chip good">On</span> ${ai.source === 'test' ? 'Test mode: canned responses, no key used.' : ai.source === 'environment' ? 'Using the key from your ANTHROPIC_API_KEY setting.' : `A key ending in <b>${esc(ai.last4)}</b> is saved on this computer.`}</p>
+              <label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-default" ${prefs.aiConsent ? 'checked' : ''} style="margin-top:.25rem"><span>Turn AI questions and follow-ups on by default</span></label>
+              ${ai.source === 'saved' ? '<div><button class="btn btn-ghost btn-sm" id="ai-remove">Remove key</button></div>' : ''}`
+            : `<p class="small muted">To let Claude write questions and follow-ups, paste an Anthropic API key. It is saved in a private file on this computer and is never sent to your browser. <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Get a key</a></p>
+              <form class="stack" id="f-key" style="gap:.6rem"><div class="field"><label for="ai-key">Anthropic API key</label><input type="password" id="ai-key" autocomplete="off" placeholder="sk-ant-..."></div><div class="error-text" id="ai-err" role="alert"></div><div><button class="btn btn-primary btn-sm" type="submit">Save key</button></div></form>`}
+          <p class="small muted">${C.disclosure.general}</p></div>
         <div class="card stack"><h3>Payment details</h3><div class="field"><label for="pay">Card</label><input type="text" id="pay" disabled placeholder="Not needed during the preview"></div></div>
         <div class="card stack"><h3>Your data</h3><p class="small muted">Everything is stored in this browser only. Clearing site data removes it.</p><button class="btn btn-ghost" id="wipe">Delete all sessions</button><div id="wipe-c" class="row" hidden><span class="small">Delete ${sessions.length} sessions and recordings?</span><button class="btn btn-danger btn-sm" id="wipe-y">Delete</button><button class="btn btn-ghost btn-sm" id="wipe-n">Cancel</button></div></div></div></div></section>`;
     const $ = (x) => root.querySelector(x);
     $('#f-profile').addEventListener('submit', (e) => {
       e.preventDefault();
       C.store.setProfile({ name: $('#p-name').value.trim(), email: $('#p-email').value.trim(), targetRole: $('#p-role').value.trim() });
-      C.store.setPrefs({ ...prefs, mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value });
+      C.store.setPrefs({ ...C.store.getPrefs(), mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value });
       $('#p-msg').textContent = 'Saved.'; setTimeout(() => { const m = $('#p-msg'); if (m) m.textContent = ''; }, 2500);
     });
     voicesP.then((list) => {
@@ -160,6 +186,13 @@
       if (tr) { e.preventDefault(); const s = await C.store.getSession(tr.dataset.tr); if (s) C.util.download('caddie-transcript.txt', new Blob([C.transcriptText(s)], { type: 'text/plain' })); }
       if (del) { if (del.dataset.armed) { await C.store.deleteSession(del.dataset.del); V.settings(root); } else { del.dataset.armed = '1'; del.textContent = 'Confirm?'; del.classList.replace('btn-ghost', 'btn-danger'); } }
     });
+    const fk = $('#f-key');
+    if (fk) fk.addEventListener('submit', async (e) => {
+      e.preventDefault(); const btn = fk.querySelector('button'); btn.disabled = true; btn.textContent = 'Checking…'; $('#ai-err').textContent = '';
+      try { await C.ai.saveKey($('#ai-key').value); V.settings(root); } catch (err) { $('#ai-err').textContent = err.message; btn.disabled = false; btn.textContent = 'Save key'; }
+    });
+    const rm = $('#ai-remove'); if (rm) rm.addEventListener('click', async () => { await C.ai.removeKey(); V.settings(root); });
+    const ad = $('#ai-default'); if (ad) ad.addEventListener('change', () => C.store.setPrefs({ ...C.store.getPrefs(), aiConsent: ad.checked }));
     $('#wipe').addEventListener('click', () => { $('#wipe-c').hidden = false; });
     $('#wipe-n').addEventListener('click', () => { $('#wipe-c').hidden = true; });
     $('#wipe-y').addEventListener('click', async () => { for (const s of sessions) await C.store.deleteSession(s.id); V.settings(root); });

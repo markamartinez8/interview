@@ -12,7 +12,7 @@
       : `${link('#/value', 'Value', route === '/value')}${link('#/about', 'About', route === '/about')}${link('#/plans', 'Plans', route === '/plans')}<a class="btn btn-primary btn-sm" href="#/app">Start practicing</a>`;
     return `<header class="site-header"><div class="container"><a class="logo" href="${inApp ? '#/app' : '#/'}">${LOGO}Caddie</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
   }
-  const footer = '<footer class="site-footer"><div class="container"><span>Caddie · Interview practice</span><span>Sessions are stored in your browser only.</span></div></footer>';
+  const footer = '<footer class="site-footer"><div class="container"><span>Caddie · Interview practice</span><span>Sessions are stored in your browser. Optional AI features send text, never video or audio, to Anthropic&rsquo;s Claude.</span></div></footer>';
 
   async function route() {
     const hash = location.hash.replace(/^#/, '') || '/';

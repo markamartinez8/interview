@@ -26,3 +26,15 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
 
 Login is intentionally skipped for now.
+
+## Optional AI features (Claude)
+
+Off by default. When turned on, Caddie sends text (never video or audio) to Anthropic's Claude to write questions and ask follow-ups.
+
+1. Create an API key at https://platform.claude.com/settings/keys (add credits under Billing first).
+2. Open Settings in Caddie, paste the key under "AI features". It is saved to `data/config.json` on this computer (git-ignored).
+   Or set the `ANTHROPIC_API_KEY` environment variable before `npm start`.
+3. Choose "Use Claude" when setting up an interview, and tick the follow-up box in the green room.
+
+The model defaults to `claude-sonnet-5-5`; override with `CADDIE_MODEL`. The server listens on 127.0.0.1 only and rejects cross-origin requests.
+`CADDIE_FAKE_AI=1` returns canned responses for testing without a key.

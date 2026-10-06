@@ -25,7 +25,7 @@
       <div class="card measure"><h3><span class="dot"></span>Face</h3><p class="muted">How you come across on camera.</p><ul><li>Eye contact with the camera</li><li>Smiling and expressiveness</li><li>Head movement</li></ul></div>
       <div class="card measure"><h3><span class="dot"></span>Body language</h3><p class="muted">What your posture says.</p><ul><li>Upright and level shoulders</li><li>Slouching and leaning</li><li>Restless movement</li></ul></div>
       <div class="card measure"><h3><span class="dot"></span>Answers</h3><p class="muted">How you structure what you say.</p><ul><li>Answer length per question</li><li>Full transcript</li><li>STAR-style action items</li></ul></div></div></div></section>
-  <section class="section alt"><div class="container row" style="justify-content:space-between;gap:1.5rem"><div class="stack" style="gap:.4rem;max-width:36rem"><h2>Your practice is private</h2><p class="muted">Video, audio and transcripts are analyzed and stored in your browser. Nothing is uploaded in this version.</p></div><a class="btn btn-primary btn-lg" href="#/app">Begin an interview</a></div></section>`;
+  <section class="section alt"><div class="container row" style="justify-content:space-between;gap:1.5rem"><div class="stack" style="gap:.4rem;max-width:36rem"><h2>Your practice is private</h2><p class="muted">Video, audio and transcripts are analyzed and stored in your browser. Nothing is uploaded unless you switch on the optional AI features, which send text only (never video or audio) to Anthropic's Claude.</p></div><a class="btn btn-primary btn-lg" href="#/app">Begin an interview</a></div></section>`;
 
   V.value = () => `
   <section class="section"><div class="container"><div class="section-head"><span class="eyebrow">Value</span><h1 style="font-size:clamp(2rem,4.5vw,3rem)">Rehearse with something that talks back</h1><p class="muted">Practicing alone in the mirror gives you no feedback. A friend is not always available. Caddie fills the gap.</p></div>
@@ -38,7 +38,7 @@
       <div class="card"><h3>Mock mode</h3><ul><li>No tips during the interview</li><li>No pausing, just like the real thing</li><li>Everything shows up in the summary afterward</li></ul></div></div></div></section>
   <section class="section"><div class="container prose"><h2>What Caddie cannot do</h2>
     <p class="muted">Being clear about limits makes the feedback more useful.</p>
-    <ul class="muted"><li>It does not predict whether you will get a job.</li><li>It does not read emotions. Eye contact, posture and pace are estimates from your camera and microphone, and lighting and camera angle affect them.</li><li>In this version Andy follows a script of questions. He does not yet ask follow-ups based on what you say.</li></ul>
+    <ul class="muted"><li>It does not predict whether you will get a job.</li><li>It does not read emotions. Eye contact, posture and pace are estimates from your camera and microphone, and lighting and camera angle affect them.</li><li>Follow-up questions and AI-written questions need the optional AI features. Without them, Andy follows a fixed list.</li></ul>
     <div><a class="btn btn-primary" href="#/app">Try it now</a></div></div></section>`;
 
   V.about = () => `
@@ -46,10 +46,10 @@
     <p>A golf caddie does not swing the club for you. They know the course, hand you the right tool and tell you the truth about the shot. Caddie does the same for interviews.</p>
     <h2>Principles</h2>
     <p><b>Measure what you can see.</b> We report pace, filler words, eye contact and posture, things you can change. We do not label emotions or personality.</p>
-    <p><b>Keep your data yours.</b> Recordings, transcripts and scores are stored in your browser. You can download or delete them any time from Settings.</p>
+    <p><b>Keep your data yours.</b> Recordings, transcripts and scores are stored in your browser. You can download or delete them any time from Settings. Optional AI features, which are off by default, send text (the job description and your answer transcripts) to Anthropic's Claude. Video and audio are never sent.</p>
     <p><b>Make practice feel real.</b> A voice, a face, a clock, and a question you did not see coming if you want that.</p>
     <h2>How it works today</h2>
-    <p>Andy reads questions from a bank matched to your role and the job description you provide. Your camera and microphone are analyzed on your device using open computer-vision models and your browser's speech recognition. Smarter follow-up questions and more natural voices are planned.</p>
+    <p>Andy is an AI interviewer. By default he reads questions from a bank matched to your role and the job description you provide. With the optional AI features on, Claude writes the questions and Andy can ask follow-ups based on your answers. Your camera and microphone are analyzed on your device using open computer-vision models and your browser's speech recognition. More natural voices are planned.</p>
     <div><a class="btn btn-primary" href="#/app">Start practicing</a></div></div></section>`;
 
   V.plans = () => `
@@ -58,5 +58,5 @@
       <div class="card plan featured"><span class="badge">Available now</span><h3 style="margin-top:.6rem">Preview</h3><p class="muted">Everything in this app.</p>
         <ul><li>Unlimited interviews</li><li>AI-style questions from a role and job description, or your own</li><li>Practice and Mock modes</li><li>Summary, transcript and recording downloads</li></ul><div style="margin-top:1rem"><a class="btn btn-primary" href="#/app">Start practicing</a></div></div>
       <div class="card plan"><span class="badge petrol">Planned</span><h3 style="margin-top:.6rem">Pro</h3><p class="muted">Pricing to be announced.</p>
-        <ul><li>Follow-up questions that respond to your answers</li><li>More natural interviewer voices</li><li>Sync sessions across devices</li><li>Progress tracking over time</li></ul><div style="margin-top:1rem"><button class="btn btn-ghost" disabled>Not available yet</button></div></div></div></div></section>`;
+        <ul><li>Hosted AI features without setting up your own key</li><li>More natural interviewer voices</li><li>Sync sessions across devices</li><li>Progress tracking over time</li></ul><div style="margin-top:1rem"><button class="btn btn-ghost" disabled>Not available yet</button></div></div></div></div></section>`;
 })(window.Caddie);
