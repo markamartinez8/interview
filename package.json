@@ -1,0 +1,14 @@
+{
+  "name": "caddie",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Caddie: practice interviews with a virtual interviewer",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node scripts/fetch-models.js"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.14"
+  },
+  "engines": { "node": ">=18" }
+}
