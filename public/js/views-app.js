@@ -41,8 +41,8 @@
     function render() {
       if (S.step === 1) {
         root.innerHTML = frame(`<div class="stack" style="gap:1.4rem">
-          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', 'interview', 'Interview', 'Andy asks questions and listens while you answer.')}${radio('agent', 'more', '', 'More agents', 'Other kinds of practice are planned.', true)}</div></div>
-          <div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Generate for me', 'Based on the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'I will write them', 'Andy asks exactly the questions you enter.')}</div></div>
+          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', 'interview', 'Interview', 'Andy asks questions and listens while you answer.')}${radio('agent', 'more', '', 'Future workflows', 'More ways to practice will appear here.', true)}</div></div>
+          <div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Dynamic questions', 'Built from the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'Static questions', 'You enter the exact questions Andy asks.')}</div></div>
           <div class="field"><span class="label">Mode</span><div class="seg">${radio('mode', 'practice', S.mode, 'Practice', 'Live cues on the side. You can pause, skip and go back.')}${radio('mode', 'mock', S.mode, 'Mock', 'Like the real thing. No tips or pausing until the summary.')}</div></div>
           <div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-primary" id="next">Next</button></div></div>`);
         root.querySelectorAll('input[name=source]').forEach((i) => i.addEventListener('change', () => { S.source = i.value; }));
@@ -132,6 +132,7 @@
           <div class="field"><label for="p-role">Target role</label><input type="text" id="p-role" value="${esc(profile.targetRole)}" placeholder="Used to pre-fill new interviews"></div>
           <div class="field"><label for="p-mode">Default mode</label><select id="p-mode"><option value="practice" ${prefs.mode === 'practice' ? 'selected' : ''}>Practice</option><option value="mock" ${prefs.mode === 'mock' ? 'selected' : ''}>Mock</option></select></div>
           <div class="field"><label for="p-sil">Seconds of silence before Andy moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
+          <div class="field"><label for="p-grace">Extra seconds to start your answer</label><input type="number" id="p-grace" min="0" max="30" value="${prefs.graceSec || 0}"><span class="hint">Added to the silence window only before you say your first word. 0 keeps it the same throughout.</span></div>
           <div class="field"><label for="p-voice">Andy's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
           <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test" disabled>Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
         <div class="card"><div class="card-title"><h3>Session logs</h3><span class="muted small">${sessions.length} saved on this device</span></div>
@@ -144,7 +145,7 @@
     $('#f-profile').addEventListener('submit', (e) => {
       e.preventDefault();
       C.store.setProfile({ name: $('#p-name').value.trim(), email: $('#p-email').value.trim(), targetRole: $('#p-role').value.trim() });
-      C.store.setPrefs({ ...prefs, mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), voiceURI: $('#p-voice').value });
+      C.store.setPrefs({ ...prefs, mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value });
       $('#p-msg').textContent = 'Saved.'; setTimeout(() => { const m = $('#p-msg'); if (m) m.textContent = ''; }, 2500);
     });
     voicesP.then((list) => {

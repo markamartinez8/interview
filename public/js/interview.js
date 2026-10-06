@@ -82,7 +82,7 @@
           <div class="controls">
             ${practice ? `<button class="ctl" id="c-back">⏮ Back</button><button class="ctl" id="c-pause">⏸ Pause</button><button class="ctl" id="c-fwd">⏭ Skip</button>` : ''}
             <button class="ctl" id="c-repeat">↺ Repeat question</button>
-            ${S.textOnly ? '<button class="ctl active" id="c-next">Next question →</button>' : ''}
+            ${S.textOnly ? '<button class="ctl active" id="c-next">Next question →</button>' : '<button class="ctl active" id="c-done">✓ I\'m done answering</button>'}
             <button class="ctl end" id="c-end">End interview</button></div>
           <div class="row" id="end-confirm" hidden style="justify-content:center;margin-top:.7rem"><span class="small">End now and see your summary?</span><button class="ctl end" id="end-yes">Yes, end</button><button class="ctl" id="end-no">Keep going</button></div>
         </div>
@@ -130,7 +130,7 @@
           S.analyzer && S.analyzer.setPaused(S.paused);
         });
       }
-      const nx = $('#c-next'); if (nx) nx.addEventListener('click', () => { S.nav = 'next'; });
+      const nx = $('#c-next') || $('#c-done'); if (nx) nx.addEventListener('click', () => { S.nav = 'next'; });
       $('#c-end').addEventListener('click', () => { $('#end-confirm').hidden = false; });
       $('#end-no').addEventListener('click', () => { $('#end-confirm').hidden = true; });
       $('#end-yes').addEventListener('click', () => { S.nav = 'end'; C.voice.cancel(); S.paused = false; });
@@ -183,14 +183,16 @@
       return C.voice.speak(text, S.voice, S.avatar).then(() => { S.speaking = false; });
     }
     function waitAnswerEnd(run) {
-      const bar = $('#silbar'), a = S.analyzer, silenceMs = prefs.silenceSec * 1000;
+      const bar = $('#silbar'), a = S.analyzer;
       return new Promise((resolve) => {
         const tick = setInterval(() => {
           if (run !== S.run || S.nav) { clearInterval(tick); return resolve(); }
           if (S.paused || S.textOnly || !a) { if (S.paused) bar.style.width = '0'; return; }
+          // Optional extra time before the first word (Settings); after that, the normal silence window applies.
+          const waitSec = prefs.silenceSec + (a.hasSpoken() ? 0 : (prefs.graceSec || 0)), silenceMs = waitSec * 1000;
           const quiet = a.quietMs();
           bar.style.width = `${Math.min(100, (quiet / silenceMs) * 100)}%`;
-          $('#status').textContent = quiet < 1500 ? 'Listening…' : `Take your time. I'll move on after ${prefs.silenceSec} quiet seconds.`;
+          $('#status').textContent = quiet < 1500 ? 'Listening…' : `Take your time. I'll move on after ${waitSec} quiet seconds.`;
           const live = a.interim; if (live) $('#caption').innerHTML = `<span class="you">You:</span> ${esc(live)}`;
           if (quiet >= silenceMs) { clearInterval(tick); bar.style.width = '0'; resolve(); }
         }, 100);

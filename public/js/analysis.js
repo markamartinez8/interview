@@ -93,6 +93,7 @@
       this.voiceOn = voice;
     }
     quietMs() { return performance.now() - this.lastVoiceAt; }
+    hasSpoken() { if (this.cur < 0) return false; const q = this.quest; return q.voiceBursts > 0 || !!q.typed; }
 
     // ----- speech recognition (Chrome / Edge / Safari) -----
     startSpeech() {
