@@ -4,40 +4,60 @@
   const { esc, fmtDur, fmtDate, uid } = C.util;
   const chip = (score) => { const l = C.label(score); return `<span class="chip ${l.cls}">${l.text}${score != null ? ` ${score}` : ''}</span>`; };
   const CAT = { speech: 'Speech', face: 'Face', body: 'Body', qa: 'Answers' };
-  const scoreChips = (s) => ['speech', 'face', 'body', 'qa'].map((k) => `<span class="chip ${C.label(s[k]).cls}">${CAT[k]} ${s[k] == null ? '—' : s[k]}</span>`).join('');
+  const scoreChips = (s, kind) => (kind === 'presentation' ? ['speech', 'face', 'body'] : ['speech', 'face', 'body', 'qa']).map((k) => `<span class="chip ${C.label(s[k]).cls}">${CAT[k]} ${s[k] == null ? '—' : s[k]}</span>`).join('');
 
   // ---------------- Dashboard ----------------
+  const sparkline = (series) => {
+    if (series.length < 2) return '';
+    const w = 84, h = 24, pts = series.map((v, i) => `${(i / (series.length - 1)) * (w - 6) + 3},${h - 3 - (Math.max(0, Math.min(100, v)) / 100) * (h - 6)}`);
+    const last = pts[pts.length - 1].split(',');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Recent scores"><polyline points="${pts.join(' ')}" fill="none" stroke="var(--color-secondary-bright)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="2.8" fill="var(--color-secondary)"/></svg>`;
+  };
+  const trendHTML = (k) => k.trend == null
+    ? '<span class="trend none" title="Trend appears after two scored sessions">Trend: needs 2+ sessions</span>'
+    : `<span class="trend ${k.trend}">${k.trend === 'up' ? '▲' : k.trend === 'down' ? '▼' : '◆'} ${k.trend === 'steady' ? 'Steady' : `${k.delta > 0 ? '+' : ''}${k.delta} pts`}</span>`;
+  const kpiRow = (k) => `<div class="kpi ${k.key === 'overall' ? 'overall' : ''}"><div class="kpi-name">${esc(k.name)}</div><div class="kpi-val">${k.avg == null ? '—' : k.avg}</div><div class="kpi-side">${trendHTML(k)}${sparkline(k.series)}</div></div>`;
+
+  function sessionsTile(q, kind) {
+    const noun = kind === 'presentation' ? 'Presentation' : 'Interview';
+    const rows = q.list.slice(0, 5).map((s) => `<div class="session-row"><div><a href="#/app/summary/${s.id}"><b>${esc(C.sessionName(s))}</b></a><div class="muted small">${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)}${kind === 'interview' ? ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}${s.completed ? '' : ' · ended early'}` : s.completed ? '' : ' · ended early'}</div></div><div class="scores">${scoreChips(s.scores, kind)}</div></div>`).join('');
+    return `<div class="card"><div class="card-title"><h3>${noun} Sessions</h3>${q.count ? `<span class="muted small">${q.count} · ${fmtDur(q.totalSec)} practiced</span>` : ''}</div>
+      ${q.count ? `<div class="session-list">${rows}</div>${q.count > 5 ? '<p class="small muted" style="margin-top:.7rem"><a href="#/app/settings">See all sessions in Profile and Settings</a></p>' : ''}`
+      : `<div class="empty"><strong>No ${noun.toLowerCase()} sessions yet</strong>${kind === 'presentation' ? 'Practice a talk and your sessions will be listed here.' : 'Your sessions and scores will appear here after your first run.'}</div>`}</div>`;
+  }
+  function quickTile(q, kind) {
+    const noun = kind === 'presentation' ? 'Presentation' : 'Interview';
+    const foot = [];
+    if (q.strongest) foot.push(`<div class="hl high"><i></i><div><b>Strongest: ${esc(q.strongest.name)}</b><div class="muted small">Average ${q.strongest.avg}.</div></div></div>`);
+    if (q.weakest) foot.push(`<div class="hl low"><i></i><div><b>Focus area: ${esc(q.weakest.name)}</b><div class="muted small">Average ${q.weakest.avg}, your lowest so far.</div></div></div>`);
+    if (q.recurring) foot.push(`<div class="hl low"><i></i><div><b>Keeps coming up</b><div class="muted small">${esc(q.recurring.text)}</div></div></div>`);
+    return `<div class="card"><div class="card-title"><h3>${noun} Quick Summary</h3>${q.scoredCount ? `<span class="muted small">${q.scoredCount} scored session${q.scoredCount > 1 ? 's' : ''}</span>` : ''}</div>
+      ${q.scoredCount ? `<div class="kpis">${q.kpis.map(kpiRow).join('')}</div><p class="small muted" style="margin:.6rem 0 0">Scores are out of 100. Trend compares your latest sessions with the ones before them.</p>${foot.length ? `<div class="hl-list" style="margin-top:1rem">${foot.join('')}</div>` : ''}`
+      : `<div class="empty"><strong>Nothing to summarize yet</strong>Finish a ${noun.toLowerCase()} with your camera on to see your scores and how they trend.</div>`}</div>`;
+  }
+
   V.dashboard = async (root) => {
-    const profile = C.store.getProfile(), prefs = C.store.getPrefs();
+    const profile = C.store.getProfile();
     const sessions = await C.store.listSessions();
-    const st = C.dashStats(sessions);
-    const hl = [];
-    if (st.strongest) hl.push(`<div class="hl high"><i></i><div><b>Strongest: ${esc(st.names[st.strongest[0]])}</b><div class="muted small">Average ${st.strongest[1]} across ${st.scored.length} scored session${st.scored.length > 1 ? 's' : ''}.</div></div></div>`);
-    if (st.best) hl.push(`<div class="hl high"><i></i><div><b>Best session: ${esc(st.best.setup.jobName || 'Custom questions')}</b><div class="muted small">Overall ${st.best.scores.overall} on ${fmtDate(st.best.createdAt)}.</div></div></div>`);
-    if (st.weakest) hl.push(`<div class="hl low"><i></i><div><b>Focus area: ${esc(st.names[st.weakest[0]])}</b><div class="muted small">Average ${st.weakest[1]}. Your lowest category so far.</div></div></div>`);
-    if (st.recurring) hl.push(`<div class="hl low"><i></i><div><b>Keeps coming up</b><div class="muted small">${esc(st.recurring.text)}</div></div></div>`);
+    const qi = C.quick(sessions, 'interview'), qp = C.quick(sessions, 'presentation');
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Dashboard</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">${profile.name ? `Welcome back, ${esc(profile.name.split(' ')[0])}` : 'Welcome to Caddie'}</h1></div></div>
-      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Run your first interview'}</h2><p>${sessions.length ? 'Each run takes 10 to 15 minutes.' : 'Pick a role, meet Caddie, and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
-      <div class="dash-grid"><div class="stack">
-        <div class="card"><div class="card-title"><h3>Summary of interviews</h3>${sessions.length ? `<span class="muted small">${sessions.length} session${sessions.length > 1 ? 's' : ''} · ${fmtDur(st.totalSec)} practiced</span>` : ''}</div>
-          ${sessions.length ? `<div class="session-list">${sessions.slice(0, 6).map((s) => `<div class="session-row"><div><a href="#/app/summary/${s.id}"><b>${esc(s.setup.jobName || 'Custom questions')}</b></a><div class="muted small">${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)} · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}${s.completed ? '' : ' · ended early'}</div></div><div class="scores">${scoreChips(s.scores)}</div></div>`).join('')}</div>${sessions.length > 6 ? '<p class="small muted" style="margin-top:.7rem"><a href="#/app/settings">See all sessions in Settings</a></p>' : ''}`
-          : '<div class="empty"><strong>No interviews yet</strong>Your sessions and scores will appear here after your first run.</div>'}</div></div>
-        <div class="stack">
-          <div class="card"><div class="card-title"><h3>Highlights and lowlights</h3></div>${hl.length ? `<div class="hl-list">${hl.join('')}</div>` : '<div class="empty"><strong>Nothing to compare yet</strong>Finish a session with your camera on to see your strengths and focus areas.</div>'}</div>
-          <div class="card"><div class="card-title"><h3>Your profile</h3><a class="small" href="#/app/settings">Edit</a></div><dl class="kv"><dt>Name</dt><dd>${esc(profile.name) || '—'}</dd><dt>Target role</dt><dd>${esc(profile.targetRole) || '—'}</dd><dt>Default mode</dt><dd>${prefs.mode === 'practice' ? 'Practice' : 'Mock'}</dd><dt>Silence before next question</dt><dd>${prefs.silenceSec} seconds</dd></dl></div>
-        </div></div></section>`;
+      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Start your first session'}</h2><p>${sessions.length ? 'Run an interview with Caddie or practice a presentation.' : 'Practice an interview with Caddie, or rehearse a talk and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
+      <div class="dash-cols">
+        <div class="stack"><h2 class="col-title">Interviews</h2>${sessionsTile(qi, 'interview')}${quickTile(qi, 'interview')}</div>
+        <div class="stack"><h2 class="col-title">Presentations</h2>${sessionsTile(qp, 'presentation')}${quickTile(qp, 'presentation')}</div>
+      </div></section>`;
   };
 
   // ---------------- Setup ----------------
   V.setup = async (root) => {
     const prefs = C.store.getPrefs(), profile = C.store.getProfile(), last = C.store.getLastSetup() || {};
     await C.ai.status();
-    const S = { step: 1, aiQ: !!(prefs.aiConsent && C.ai.info.available), qSource: 'templates', source: last.source || 'ai', mode: last.mode || prefs.mode,
+    const S = { step: 1, agent: last.agent === 'present' ? 'present' : 'interview', title: last.title || '', aiQ: !!(prefs.aiConsent && C.ai.info.available), qSource: 'templates', source: last.source || 'ai', mode: last.mode || prefs.mode,
       jobName: last.jobName || profile.targetRole || '', jd: last.jd || '', custom: last.custom || '', questions: [] };
-    const steps = ['Choose', 'Details', 'Review'];
+    const stepsOf = () => (S.agent === 'present' ? ['Choose', 'Presentation'] : ['Choose', 'Details', 'Review']);
     const frame = (inner) => `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">New interview</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Set up your interview</h1></div></div>
-      <div class="wizard-steps">${steps.map((n, i) => `<span class="chip ${i + 1 === S.step ? 'current' : ''}">${i + 1}. ${n}</span>`).join('')}</div><div class="card form-card">${inner}</div></section>`;
+      <div class="wizard-steps">${stepsOf().map((n, i) => `<span class="chip ${i + 1 === S.step ? 'current' : ''}">${i + 1}. ${n}</span>`).join('')}</div><div class="card form-card">${inner}</div></section>`;
     const radio = (name, val, cur, title, desc, dis) => `<label class="choice ${dis ? 'disabled' : ''}"><input type="radio" name="${name}" value="${val}" ${cur === val ? 'checked' : ''} ${dis ? 'disabled' : ''}><strong>${title}</strong><span>${desc}</span></label>`;
     const $ = (x) => root.querySelector(x);
 
@@ -61,8 +81,8 @@
       return true;
     }
     function toGreenRoom() {
-      C.store.setLastSetup({ source: S.source, mode: S.mode, jobName: S.jobName, jd: S.jd, custom: S.custom });
-      C.pending = { source: S.source, mode: S.mode, jobName: S.jobName.trim(), jd: S.jd, custom: S.custom, questions: S.questions, qSource: S.qSource };
+      C.store.setLastSetup({ agent: 'interview', source: S.source, mode: S.mode, jobName: S.jobName, jd: S.jd, custom: S.custom });
+      C.pending = { kind: 'interview', source: S.source, mode: S.mode, jobName: S.jobName.trim(), jd: S.jd, custom: S.custom, questions: S.questions, qSource: S.qSource };
       location.hash = '#/app/interview';
     }
 
@@ -80,14 +100,27 @@
 
     function render() {
       if (S.step === 1) {
+        const interview = S.agent === 'interview';
         root.innerHTML = frame(`<div class="stack" style="gap:1.4rem">
-          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', 'interview', 'Interview', 'Caddie asks questions and listens while you answer.')}${radio('agent', 'more', '', 'Future workflows', 'More ways to practice will appear here.', true)}</div></div>
-          <div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Dynamic questions', 'Built from the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'Static questions', 'You enter the exact questions Caddie asks.')}</div></div>
-          <div class="field"><span class="label">Mode</span><div class="seg">${radio('mode', 'practice', S.mode, 'Practice', 'Live cues on the side. You can pause, skip and go back.')}${radio('mode', 'mock', S.mode, 'Mock', 'Like the real thing. No tips or pausing until the summary.')}</div></div>
+          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', S.agent, 'Interview', 'Caddie asks questions and listens while you answer.')}${radio('agent', 'present', S.agent, 'Practice Presenting', 'Caddie listens to your presentation')}</div></div>
+          ${interview ? `<div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Dynamic questions', 'Built from the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'Static questions', 'You enter the exact questions Caddie asks.')}</div></div>
+          <div class="field"><span class="label">Mode</span><div class="seg">${radio('mode', 'practice', S.mode, 'Practice', 'Live cues on the side. You can pause, skip and go back.')}${radio('mode', 'mock', S.mode, 'Mock', 'Like the real thing. No tips or pausing until the summary.')}</div></div>` : ''}
           <div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-primary" id="next">Next</button></div></div>`);
+        root.querySelectorAll('input[name=agent]').forEach((i) => i.addEventListener('change', () => { S.agent = i.value; render(); }));
         root.querySelectorAll('input[name=source]').forEach((i) => i.addEventListener('change', () => { S.source = i.value; }));
         root.querySelectorAll('input[name=mode]').forEach((i) => i.addEventListener('change', () => { S.mode = i.value; }));
         $('#next').addEventListener('click', () => { S.step = 2; render(); });
+      } else if (S.step === 2 && S.agent === 'present') {
+        root.innerHTML = frame(`<div class="stack">
+          <div class="field"><label for="ptitle">Presentation name <span class="req">*</span></label><input type="text" id="ptitle" value="${esc(S.title)}" placeholder="e.g. Q4 results for the leadership team" maxlength="120"><span class="hint">You will see only yourself in the green room. Caddie listens and gives feedback afterward, but does not join or talk.</span></div>
+          <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary" id="go" ${S.title.trim() ? '' : 'disabled'}>Go to green room</button></div></div>`);
+        const t = $('#ptitle'), go = $('#go');
+        t.addEventListener('input', () => { S.title = t.value; go.disabled = !t.value.trim(); });
+        t.focus();
+        $('#back').addEventListener('click', () => { S.step = 1; render(); });
+        const start = () => { if (!S.title.trim()) return; C.store.setLastSetup({ agent: 'present', title: S.title.trim() }); C.pending = { kind: 'presentation', title: S.title.trim() }; location.hash = '#/app/present'; };
+        go.addEventListener('click', start);
+        t.addEventListener('keydown', (e) => { if (e.key === 'Enter') start(); });
       } else if (S.step === 2) {
         const buttons = `<div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><div class="row"><button class="btn btn-ghost" id="preview">Preview questions</button><button class="btn btn-primary" id="go">Go to green room</button></div></div>`;
         root.innerHTML = frame(S.source === 'ai' ? `<div class="stack">
@@ -139,27 +172,28 @@
     const m = s.metrics, d = C.describe(m), sc = s.scores;
     const rowsHTML = (rows) => `<div class="metric-list">${rows.map((r) => `<div class="metric"><span>${esc(r[0])}${r[2] ? `<br><small class="muted">${esc(r[2])}</small>` : ''}</span><b>${esc(r[1])}</b></div>`).join('')}</div>`;
     const card = (title, key, rows, note) => `<div class="card score"><div class="card-title" style="margin:0"><h3>${title}</h3>${chip(sc[key])}</div><div class="score-num">${sc[key] == null ? '—' : `${sc[key]}<small> / 100</small>`}</div><div class="bar ${C.label(sc[key]).cls}"><div style="width:${sc[key] || 0}%"></div></div>${note ? `<p class="small muted">${note}</p>` : ''}${rowsHTML(rows)}</div>`;
-    const caps = m.capabilities;
+    const caps = m.capabilities, pres = C.sessionKind(s) === 'presentation';
+    const pq = m.perQuestion[0] || {};
     root.innerHTML = `<section class="container page">
-      <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Summary</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${esc(s.setup.jobName || 'Custom questions')}</h1>
-        <div class="muted">${fmtDate(s.createdAt)} · ${fmtDur(m.duration)} · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode${s.completed ? '' : ' · ended early'}</div>
+      <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">${pres ? 'Presentation summary' : 'Summary'}</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${esc(C.sessionName(s))}</h1>
+        <div class="muted">${fmtDate(s.createdAt)} · ${fmtDur(m.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}${s.completed ? '' : ' · ended early'}</div>
         ${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? `<div class="row" style="gap:.4rem">${s.ai.qSource === 'claude' ? '<span class="badge">Questions written by Claude (AI)</span>' : ''}${s.ai.followUps ? `<span class="badge">${s.ai.followUps} AI follow-up${s.ai.followUps > 1 ? 's' : ''}</span>` : ''}</div>` : ''}</div>
         <div class="row"><button class="btn btn-ghost" id="dl-sum">Download summary</button><button class="btn btn-ghost" id="dl-rec" ${s.hasRecording ? '' : 'disabled'}>Download recording</button><button class="btn btn-ghost" id="dl-tr">Download transcript</button></div></div>
       ${!caps.speech || !caps.vision ? `<div class="callout warn" style="margin-bottom:1rem">${[!caps.speech ? 'Speech measures need speech recognition, which this browser did not provide. Chrome or Edge work best.' : '', caps.camera && !caps.vision ? 'Face and posture analysis could not load.' : '', !caps.camera ? 'No camera was used, so face and posture were not measured.' : ''].filter(Boolean).join(' ')}</div>` : ''}
       <div class="score-grid">
         ${card('Speech style', 'speech', d.speech)}${card('Facial expression', 'face', d.face, 'Eye contact drives this score. Smiling and expressiveness are shown for information.')}${card('Body language', 'body', d.body)}</div>
       <div class="dash-grid"><div class="stack">
-        <div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Caddie (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>
+        ${pres ? `<div class="card"><div class="card-title"><h3>Transcript</h3><span class="muted small">${pq.words || 0} words${pq.wpm ? ` · ${pq.wpm} wpm` : ''}${pq.eyePct != null ? ` · eye contact ${pq.eyePct}%` : ''}</span></div>${pq.answer ? `<blockquote style="margin:0;padding:.6rem .9rem;background:var(--color-cloud);border-left:3px solid var(--color-secondary-bright);border-radius:0 8px 8px 0;color:var(--text-muted);font-size:.94rem">${esc(pq.answer)}</blockquote>` : `<p class="muted">${caps.speech ? 'No speech was captured.' : 'No transcript. This browser has no speech recognition. Chrome or Edge work best.'}</p>`}</div>` : `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Caddie (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`}
         <div class="stack"><div class="card"><div class="card-title"><h3>Action items</h3></div><ol class="actions-list">${s.actions.length ? s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('') : '<li>Not enough data was captured to suggest changes.</li>'}</ol></div>
-          <div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">Same questions</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>
-          <p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring outcomes.</p></div></div></section>`;
+          <div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">${pres ? 'Same presentation' : 'Same questions'}</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>
+          <p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.</p></div></div></section>`;
     const $ = (x) => root.querySelector(x), stamp = new Date(s.createdAt).toISOString().slice(0, 10);
     $('#dl-sum').addEventListener('click', () => C.util.download(`caddie-summary-${stamp}.html`, new Blob([C.reportHTML(s)], { type: 'text/html' })));
     $('#dl-tr').addEventListener('click', () => C.util.download(`caddie-transcript-${stamp}.txt`, new Blob([C.transcriptText(s)], { type: 'text/plain' })));
     $('#dl-rec').addEventListener('click', async () => { const b = await C.store.getRecording(s.id); if (!b) return C.util.toast('The recording is not available in this browser.'); C.util.download(`caddie-recording-${stamp}.${/mp4/.test(b.type) ? 'mp4' : 'webm'}`, b); });
     $('#retry').addEventListener('click', () => { $('#retry-opts').hidden = false; });
-    $('#retry-same').addEventListener('click', () => { C.pending = { ...s.setup }; location.hash = '#/app/interview'; });
-    $('#retry-change').addEventListener('click', () => { C.store.setLastSetup({ source: s.setup.source, mode: s.setup.mode, jobName: s.setup.jobName, jd: s.setup.jd, custom: s.setup.custom, withOpener: s.setup.withOpener }); location.hash = '#/app/setup'; });
+    $('#retry-same').addEventListener('click', () => { C.pending = { ...s.setup }; location.hash = pres ? '#/app/present' : '#/app/interview'; });
+    $('#retry-change').addEventListener('click', () => { C.store.setLastSetup(pres ? { agent: 'present', title: s.setup.title } : { source: s.setup.source, mode: s.setup.mode, jobName: s.setup.jobName, jd: s.setup.jd, custom: s.setup.custom, withOpener: s.setup.withOpener }); location.hash = '#/app/setup'; });
   };
 
   // ---------------- Settings ----------------
@@ -169,7 +203,7 @@
     const ai = await C.ai.status();
     let voices = [];
     const voicesP = C.voice.list();
-    root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Settings</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Your account</h1></div></div>
+    root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Profile and Settings</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Your profile</h1></div></div>
       <div class="dash-grid"><div class="stack">
         <form class="card stack" id="f-profile"><h3>Profile</h3>
           <div class="field"><label for="p-name">Name</label><input type="text" id="p-name" value="${esc(profile.name)}"></div>
@@ -178,13 +212,11 @@
           <div class="field"><label for="p-mode">Default mode</label><select id="p-mode"><option value="practice" ${prefs.mode === 'practice' ? 'selected' : ''}>Practice</option><option value="mock" ${prefs.mode === 'mock' ? 'selected' : ''}>Mock</option></select></div>
           <div class="field"><label for="p-sil">Seconds of silence before Caddie moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
           <div class="field"><label for="p-grace">Extra seconds to start your answer</label><input type="number" id="p-grace" min="0" max="30" value="${prefs.graceSec || 0}"><span class="hint">Added to the silence window only before you say your first word. 0 keeps it the same throughout.</span></div>
-          <div class="field"><label for="p-engine">Caddie's voice</label><select id="p-engine"><option value="browser" ${prefs.voiceEngine !== 'natural' ? 'selected' : ''}>Standard (your browser's voice)</option><option value="natural" ${prefs.voiceEngine === 'natural' ? 'selected' : ''}>Natural (more human, one-time ~90 MB download)</option></select><span class="hint">The natural voice is generated on this device and stored by your browser after the first download. Nothing is sent anywhere.</span></div>
-          <div class="field" id="f-nvoice"><label for="p-nvoice">Natural voice</label><select id="p-nvoice">${C.voice.naturalVoices.map(([id, name]) => `<option value="${id}" ${id === prefs.naturalVoice ? 'selected' : ''}>${name}</option>`).join('')}</select></div>
-          <div class="field" id="f-bvoice"><label for="p-voice">Standard voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
+          <div class="field"><label for="p-voice">Caddie's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
           <div class="field"><label for="p-speed">Speaking speed: <span id="p-speed-v">${(+prefs.voiceSpeed || 1).toFixed(2)}x</span></label><input type="range" id="p-speed" min="0.85" max="1.15" step="0.05" value="${+prefs.voiceSpeed || 1}"></div>
           <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test">Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
         <div class="card"><div class="card-title"><h3>Session logs</h3><span class="muted small">${sessions.length} saved on this device</span></div>
-          ${sessions.length ? `<div class="scroll-x"><table class="logs"><thead><tr><th>Date</th><th>Role</th><th>Scores</th><th>Files</th><th></th></tr></thead><tbody>${sessions.map((s) => `<tr><td>${fmtDate(s.createdAt)}<br><span class="muted small">${fmtDur(s.metrics.duration)}</span></td><td>${esc(s.setup.jobName || 'Custom')}<br><span class="muted small">${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}</span></td><td>${scoreChips(s.scores)}</td>
+          ${sessions.length ? `<div class="scroll-x"><table class="logs"><thead><tr><th>Date</th><th>Session</th><th>Scores</th><th>Files</th><th></th></tr></thead><tbody>${sessions.map((s) => `<tr><td>${fmtDate(s.createdAt)}<br><span class="muted small">${fmtDur(s.metrics.duration)}</span></td><td>${esc(C.sessionName(s))}<br><span class="muted small">${C.sessionKind(s) === 'presentation' ? 'Presentation' : `Interview · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`}</span></td><td>${scoreChips(s.scores, C.sessionKind(s))}</td>
             <td><a href="#/app/summary/${s.id}">Summary</a><br><a href="#" data-rec="${s.id}" ${s.hasRecording ? '' : 'hidden'}>Recording</a><br><a href="#" data-tr="${s.id}">Transcript</a></td><td><button class="btn btn-ghost btn-sm" data-del="${s.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No sessions yet</strong>Completed interviews are listed here with their summary, recording and transcript.</div>'}</div></div>
       <div class="stack"><div class="card"><h3 style="margin-bottom:.6rem">Credits and subscription</h3><dl class="kv"><dt>Plan</dt><dd>Preview (free)</dd><dt>Sessions used</dt><dd>${sessions.length}</dd><dt>Limit</dt><dd>None</dd></dl><p class="small muted" style="margin-top:.7rem">Paid plans are not available yet. See <a href="#/plans">Plans</a>.</p></div>
         <div class="card stack" id="ai-card"><h3>AI features</h3>
@@ -201,29 +233,18 @@
     $('#f-profile').addEventListener('submit', (e) => {
       e.preventDefault();
       C.store.setProfile({ name: $('#p-name').value.trim(), email: $('#p-email').value.trim(), targetRole: $('#p-role').value.trim() });
-      C.store.setPrefs({ ...C.store.getPrefs(), mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value, voiceEngine: $('#p-engine').value, naturalVoice: $('#p-nvoice').value, voiceSpeed: +$('#p-speed').value || 1 });
+      C.store.setPrefs({ ...C.store.getPrefs(), mode: $('#p-mode').value, silenceSec: Math.max(3, Math.min(15, +$('#p-sil').value || 5)), graceSec: Math.max(0, Math.min(30, +$('#p-grace').value || 0)), voiceURI: $('#p-voice').value, voiceSpeed: +$('#p-speed').value || 1 });
       $('#p-msg').textContent = 'Saved.'; setTimeout(() => { const m = $('#p-msg'); if (m) m.textContent = ''; }, 2500);
     });
     voicesP.then((list) => {
       voices = list; const sel = $('#p-voice'); if (!sel) return;
       sel.innerHTML = list.length ? list.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === prefs.voiceURI ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('') : '<option value="">No voices available in this browser</option>';
     });
-    const syncVoiceFields = () => { const nat = $('#p-engine').value === 'natural'; $('#f-nvoice').hidden = !nat; $('#f-bvoice').hidden = nat; };
-    $('#p-engine').addEventListener('change', syncVoiceFields); syncVoiceFields();
     $('#p-speed').addEventListener('input', () => { $('#p-speed-v').textContent = `${(+$('#p-speed').value).toFixed(2)}x`; });
     $('#p-test').addEventListener('click', async () => {
-      const msg = $('#p-msg'), say = "Hi, I'm Caddie. Thanks for joining me today. Let's start with your background.";
-      C.voice.cancel();
-      let engine = $('#p-engine').value;
-      if (engine === 'natural' && !C.voice.naturalState().ready) {
-        $('#p-test').disabled = true; msg.textContent = 'Downloading the natural voice… 0%';
-        const ok = await C.voice.loadNatural((pc) => { msg.textContent = `Downloading the natural voice… ${pc}%`; });
-        $('#p-test').disabled = false;
-        if (!ok) { msg.textContent = 'Could not load the natural voice. Check your internet connection. Playing the standard voice instead.'; engine = 'browser'; } else msg.textContent = '';
-      }
-      C.voice.configure({ engine, naturalVoice: $('#p-nvoice').value, speed: +$('#p-speed').value });
+      C.voice.cancel(); C.voice.configure({ speed: +$('#p-speed').value });
       const v = voices.find((x) => x.voiceURI === $('#p-voice').value) || voices[0] || null;
-      await C.voice.speak(say, v, null);
+      await C.voice.speak("Hi, I'm Caddie. Thanks for joining me today. Let's start with your background.", v, null);
     });
     root.addEventListener('click', async (e) => {
       const rec = e.target.closest('[data-rec]'), tr = e.target.closest('[data-tr]'), del = e.target.closest('[data-del]');

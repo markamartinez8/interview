@@ -8,9 +8,9 @@
     const inApp = route.startsWith('/app');
     const link = (href, text, cur) => `<a href="${href}" ${cur ? 'aria-current="page"' : ''}>${text}</a>`;
     const nav = minimal ? '' : inApp
-      ? `${link('#/app', 'Dashboard', route === '/app')}${link('#/app/settings', 'Settings', route === '/app/settings')}<a class="btn btn-primary btn-sm" href="#/app/setup">Begin session</a>`
+      ? `${link('#/app', 'Dashboard', route === '/app')}${link('#/app/settings', 'Profile and Settings', route === '/app/settings')}<a class="btn btn-primary btn-sm" href="#/app/setup">Begin session</a>`
       : `${link('#/value', 'Value', route === '/value')}${link('#/about', 'About', route === '/about')}${link('#/plans', 'Plans', route === '/plans')}<a class="btn btn-primary btn-sm" href="#/app">Start practicing</a>`;
-    return `<header class="site-header"><div class="container"><a class="logo" href="${inApp ? '#/app' : '#/'}">${LOGO}Caddie</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
+    return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
   }
   const footer = '<footer class="site-footer"><div class="container"><span>Caddie · Interview practice</span><span>Sessions are stored in your browser. Optional AI features send text, never video or audio, to Anthropic&rsquo;s Claude.</span></div></footer>';
 
@@ -20,11 +20,11 @@
     if (current && current.destroy) { try { current.destroy(); } catch { /* ignore */ } }
     current = null;
     const publicPages = { '/': 'home', '/value': 'value', '/about': 'about', '/plans': 'plans' };
-    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/settings': 'settings' };
+    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings' };
     let key = path;
     let params = rest;
     if (path === '/app/summary') { key = '/app/summary'; params = rest; }
-    const minimal = key === '/app/interview';
+    const minimal = key === '/app/interview' || key === '/app/present';
     app.innerHTML = `${header(key, minimal)}<main id="view" tabindex="-1"></main>${minimal ? '' : footer}`;
     const view = document.getElementById('view');
     window.scrollTo(0, 0);

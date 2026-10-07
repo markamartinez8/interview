@@ -10,7 +10,7 @@
   <section class="hero"><div class="container hero-grid">
     <div class="stack" style="gap:1.2rem"><span class="eyebrow">Interview practice</span>
       <h1>Practice the interview <em>before it counts.</em></h1>
-      <p class="lead">Meet Caddie, a virtual interviewer who asks real questions, waits while you answer, and gives you a straight read on your speech, eye contact and posture.</p>
+      <p class="lead">Meet Caddie, a virtual interviewer who asks real questions, waits while you answer, and gives you a straight read on your speech, eye contact and posture. Or rehearse a presentation and get the same feedback.</p>
       <div class="row"><a class="btn btn-primary btn-lg" href="#/app">Start practicing</a><a class="btn btn-ghost btn-lg" href="#/value">See what you get</a></div>
       <p class="small muted">No account needed in this preview. Your sessions stay on your device.</p></div>
     ${mockTiles}</div></section>
@@ -49,7 +49,7 @@
     <p><b>Keep your data yours.</b> Recordings, transcripts and scores are stored in your browser. You can download or delete them any time from Settings. Optional AI features, which are off by default, send text (the job description and your answer transcripts) to Anthropic's Claude. Video and audio are never sent.</p>
     <p><b>Make practice feel real.</b> A voice, a face, a clock, and a question you did not see coming if you want that.</p>
     <h2>How it works today</h2>
-    <p>Caddie is an AI interviewer. By default it reads questions from a bank matched to your role and the job description you provide. With the optional AI features on, Claude writes the questions and Caddie can ask follow-ups based on your answers. Your camera and microphone are analyzed on your device using open computer-vision models and your browser's speech recognition. More natural voices are planned.</p>
+    <p>Caddie is an AI interviewer. By default it reads questions from a bank matched to your role and the job description you provide. With the optional AI features on, Claude writes the questions and Caddie can ask follow-ups based on your answers. Your camera and microphone are analyzed on your device using open computer-vision models and your browser's speech recognition.</p>
     <div><a class="btn btn-primary" href="#/app">Start practicing</a></div></div></section>`;
 
   V.plans = () => `
@@ -58,5 +58,5 @@
       <div class="card plan featured"><span class="badge">Available now</span><h3 style="margin-top:.6rem">Preview</h3><p class="muted">Everything in this app.</p>
         <ul><li>Unlimited interviews</li><li>AI-style questions from a role and job description, or your own</li><li>Practice and Mock modes</li><li>Summary, transcript and recording downloads</li></ul><div style="margin-top:1rem"><a class="btn btn-primary" href="#/app">Start practicing</a></div></div>
       <div class="card plan"><span class="badge petrol">Planned</span><h3 style="margin-top:.6rem">Pro</h3><p class="muted">Pricing to be announced.</p>
-        <ul><li>Hosted AI features without setting up your own key</li><li>More natural interviewer voices</li><li>Sync sessions across devices</li><li>Progress tracking over time</li></ul><div style="margin-top:1rem"><button class="btn btn-ghost" disabled>Not available yet</button></div></div></div></div></section>`;
+        <ul><li>Hosted AI features without setting up your own key</li><li>Sync sessions across devices</li><li>Progress tracking over time</li></ul><div style="margin-top:1rem"><button class="btn btn-ghost" disabled>Not available yet</button></div></div></div></div></section>`;
 })(window.Caddie);

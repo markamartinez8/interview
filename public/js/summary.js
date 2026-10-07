@@ -5,7 +5,9 @@
   const label = (s) => (s == null ? { text: 'Not measured', cls: 'na' } : s >= 75 ? { text: 'Strong', cls: 'good' } : s >= 55 ? { text: 'Solid', cls: 'ok' } : { text: 'Needs work', cls: 'low' });
   C.label = label;
 
-  C.score = function (m, questions) {
+  C.score = function (m, questions, kind) {
+    const pres = kind === 'presentation';
+    const LO = pres ? 100 : 110, HI = pres ? 160 : 175, RANGE = pres ? '110 to 150' : '120 to 165';
     const out = { speech: null, face: null, body: null, qa: null };
     const actions = [];
     const add = (key, sev, text) => actions.push({ key, sev, text });
@@ -14,13 +16,13 @@
     // Speech: pace, filler words, long pauses
     if (m.capabilities.speech && sp.wpm != null && sp.words >= 25) {
       let s = 100;
-      if (sp.wpm < 110) s -= Math.min(30, (110 - sp.wpm) * 0.8);
-      if (sp.wpm > 175) s -= Math.min(30, (sp.wpm - 175) * 0.8);
+      if (sp.wpm < LO) s -= Math.min(30, (LO - sp.wpm) * 0.8);
+      if (sp.wpm > HI) s -= Math.min(30, (sp.wpm - HI) * 0.8);
       if (sp.fillersPer100 > 2) s -= Math.min(30, (sp.fillersPer100 - 2) * 6);
       s -= Math.min(20, sp.longPauses * 5);
       out.speech = Math.round(clamp(s));
-      if (sp.wpm > 175) add('pace-fast', 3, `Slow down. You averaged ${sp.wpm} words per minute; aim for 120 to 165. Take a breath after each main point.`);
-      if (sp.wpm < 105) add('pace-slow', 2, `Pick up the energy a little. You averaged ${sp.wpm} words per minute; 120 to 165 sounds natural and confident.`);
+      if (sp.wpm > HI) add('pace-fast', 3, `Slow down. You averaged ${sp.wpm} words per minute; aim for ${RANGE}. Take a breath after each main point.`);
+      if (sp.wpm < LO - 5) add('pace-slow', 2, `Pick up the energy a little. You averaged ${sp.wpm} words per minute; ${RANGE} sounds natural and confident.`);
       if (sp.fillersPer100 > 3) {
         const top = Object.entries(sp.fillerWords).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([w, n]) => `"${w}" ×${n}`).join(', ');
         add('fillers', 3, `Cut filler words. You used ${sp.fillers} (${top}). Replace them with a short silent pause.`);
@@ -50,7 +52,7 @@
 
     // Answers: length and coverage
     const asked = m.perQuestion.filter((q) => q.asked && q.seconds > 0);
-    if (asked.length) {
+    if (!pres && asked.length) {
       const good = asked.filter((q) => q.speakSec >= 20 && q.speakSec <= 150 || (q.speakSec < 20 && q.typed));
       out.qa = Math.round((good.length / questions.length) * 100);
       const short = asked.filter((q) => q.speakSec < 20 && !q.typed).length, long = asked.filter((q) => q.speakSec > 150).length;
@@ -72,7 +74,7 @@
     const unit = (v, lo, hi, a, ok, c) => (v == null ? '—' : v < lo ? a : v > hi ? c : ok);
     return {
       speech: [
-        ['Pace', sp.wpm != null ? `${sp.wpm} words/min` : 'Not measured', sp.wpm == null ? '' : sp.wpm < 110 ? 'a bit slow' : sp.wpm > 175 ? 'fast' : 'in the target range'],
+        ['Pace', sp.wpm != null ? `${sp.wpm} words/min` : 'Not measured', sp.wpm == null ? '' : sp.wpm < 105 ? 'a bit slow' : sp.wpm > 175 ? 'fast' : 'in the target range'],
         ['Filler words', sp.fillersPer100 != null ? `${sp.fillers} (${sp.fillersPer100} per 100 words)` : 'Not measured', sp.fillersPer100 == null ? '' : sp.fillersPer100 > 3 ? 'frequent' : 'low'],
         ['Pauses over 3 seconds', m.capabilities.speech ? String(sp.longPauses) : 'Not measured', ''],
         ['Time speaking', fmtDur(sp.speakSec), ''],
@@ -112,7 +114,14 @@
     return parts;
   };
 
+  C.sessionKind = (s) => (s.setup && s.setup.kind === 'presentation' ? 'presentation' : 'interview');
+  C.sessionName = (s) => (C.sessionKind(s) === 'presentation' ? (s.setup.title || 'Untitled presentation') : (s.setup.jobName || 'Custom questions'));
+
   C.transcriptText = function (s) {
+    if (C.sessionKind(s) === 'presentation') {
+      const q = s.metrics.perQuestion[0] || {};
+      return [`Caddie presentation transcript`, `Presentation: ${C.sessionName(s)}`, `Date: ${fmtDate(s.createdAt)}`, `Length: ${fmtDur(s.metrics.duration)}`, '', q.answer || '(no transcript captured)', ''].join('\n');
+    }
     const lines = [`Caddie interview transcript`, `Role: ${s.setup.jobName || 'Custom questions'}`, `Date: ${fmtDate(s.createdAt)}`, `Mode: ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`, ''];
     s.metrics.perQuestion.forEach((q, i) => {
       lines.push(`Q${i + 1} Caddie: ${q.text}`);
@@ -127,29 +136,44 @@
   };
 
   C.reportHTML = function (s) {
+    const pres = C.sessionKind(s) === 'presentation';
     const d = C.describe(s.metrics), L = (x) => label(x).text;
     const block = (title, rows) => `<h3>${esc(title)}</h3><table>${rows.map((r) => `<tr><td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td><td>${esc(r[2] || '')}</td></tr>`).join('')}</table>`;
     return `<!doctype html><html lang="en"><meta charset="utf-8"><title>Caddie summary</title>
 <style>body{font:16px/1.5 system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#14171F}h1{color:#3730A3}h3{margin-top:1.6rem}table{border-collapse:collapse;width:100%}td{padding:.35rem .5rem;border-top:1px solid #E6E8EC}blockquote{margin:.3rem 0 1rem;padding:.4rem .8rem;border-left:3px solid #2A9DA8;background:#F7F8FA;color:#4A5261}.s{display:inline-block;margin-right:1.2rem}</style>
-<h1>Caddie interview summary</h1><p>${esc(s.setup.jobName || 'Custom questions')} · ${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)} · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode</p>
-<p>${['speech', 'face', 'body', 'qa'].map((k) => `<span class="s"><b>${{ speech: 'Speech', face: 'Face', body: 'Body language', qa: 'Answers' }[k]}</b>: ${s.scores[k] == null ? 'not measured' : `${s.scores[k]} (${L(s.scores[k])})`}</span>`).join('')}</p>
+<h1>Caddie ${pres ? 'presentation' : 'interview'} summary</h1><p>${esc(C.sessionName(s))} · ${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}</p>
+<p>${(pres ? ['speech', 'face', 'body'] : ['speech', 'face', 'body', 'qa']).map((k) => `<span class="s"><b>${{ speech: 'Speech', face: 'Face', body: 'Body language', qa: 'Answers' }[k]}</b>: ${s.scores[k] == null ? 'not measured' : `${s.scores[k]} (${L(s.scores[k])})`}</span>`).join('')}</p>
 <h3>Action items</h3><ol>${s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('')}</ol>
 ${block('Speech', d.speech)}${block('Face', d.face)}${block('Body language', d.body)}
-<h3>Questions and answers</h3>${s.metrics.perQuestion.map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q.text)}</p>${C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<i>Caddie (AI follow-up):</i> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${q.asked ? 'No transcript captured.' : 'Not asked.'}</blockquote>`}`).join('')}
-<p style="color:#4A5261;font-size:.85rem">Measurements are practice indicators from on-device analysis, not predictions of hiring outcomes.${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? ' Some questions were written by AI (Anthropic\'s Claude).' : ''}</p></html>`;
+${pres ? `<h3>Transcript</h3><blockquote>${esc((s.metrics.perQuestion[0] || {}).answer || 'No transcript captured.')}</blockquote>` : `<h3>Questions and answers</h3>${s.metrics.perQuestion.map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q.text)}</p>${C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<i>Caddie (AI follow-up):</i> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${q.asked ? 'No transcript captured.' : 'Not asked.'}</blockquote>`}`).join('')}`}
+<p style="color:#4A5261;font-size:.85rem">Measurements are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? ' Some questions were written by AI (Anthropic\'s Claude).' : ''}</p></html>`;
   };
 
-  C.dashStats = function (sessions) {
-    const scored = sessions.filter((s) => s.scores && s.scores.overall != null);
-    const names = { speech: 'Speech', face: 'Eye contact and expression', body: 'Body language', qa: 'Answer structure' };
-    const avg = {};
-    for (const k of Object.keys(names)) { const v = scored.map((s) => s.scores[k]).filter((x) => x != null); if (v.length) avg[k] = Math.round(v.reduce((a, b) => a + b, 0) / v.length); }
-    const ranked = Object.entries(avg).sort((a, b) => b[1] - a[1]);
-    const best = scored.slice().sort((a, b) => b.scores.overall - a.scores.overall)[0] || null;
+  const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  // Quick summary for one kind of session ("interview" or "presentation"): average and trend for each KPI.
+  // Trend = mean of your most recent scores minus the mean of the ones before them (needs two or more scored sessions).
+  C.quick = function (sessions, kind) {
+    const list = sessions.filter((s) => C.sessionKind(s) === kind); // newest first
+    const scored = list.filter((s) => s.scores && s.scores.overall != null);
+    const KEYS = [['overall', 'Overall'], ['speech', 'Speech style'], ['face', 'Eye contact and expression'], ['body', 'Body language']];
+    if (kind === 'interview') KEYS.push(['qa', 'Answer structure']);
+    const kpis = KEYS.map(([key, name]) => {
+      const chron = scored.map((s) => s.scores[key]).filter((v) => v != null).reverse(); // oldest to newest
+      const n = chron.length;
+      let delta = null;
+      if (n >= 2) {
+        const recent = chron.slice(-Math.min(3, Math.ceil(n / 2)));
+        const prior = chron.slice(0, n - recent.length).slice(-3);
+        delta = Math.round(mean(recent) - mean(prior));
+      }
+      return { key, name, n, avg: n ? Math.round(mean(chron)) : null, latest: n ? chron[n - 1] : null, delta,
+        trend: delta == null ? null : delta >= 2 ? 'up' : delta <= -2 ? 'down' : 'steady', series: chron.slice(-8) };
+    });
+    const cats = kpis.filter((k) => k.key !== 'overall' && k.avg != null).sort((a, b) => b.avg - a.avg);
     const counts = {};
     scored.forEach((s) => (s.actions || []).filter((a) => a.sev >= 1).forEach((a) => { counts[a.key] = counts[a.key] || { n: 0, text: a.text }; counts[a.key].n++; }));
-    const recurring = Object.values(counts).sort((a, b) => b.n - a.n)[0];
-    return { scored, names, avg, strongest: ranked[0], weakest: ranked.length > 1 ? ranked[ranked.length - 1] : null, best, recurring: recurring && recurring.n > 1 ? recurring : null,
-      totalSec: sessions.reduce((n, s) => n + ((s.metrics && s.metrics.duration) || 0), 0) };
+    const rec = Object.values(counts).sort((a, b) => b.n - a.n)[0];
+    return { count: list.length, scoredCount: scored.length, totalSec: list.reduce((n, s) => n + ((s.metrics && s.metrics.duration) || 0), 0), list, kpis,
+      strongest: cats[0] || null, weakest: cats.length > 1 && cats[cats.length - 1].avg < cats[0].avg ? cats[cats.length - 1] : null, recurring: rec && rec.n > 1 ? rec : null };
   };
 })(window.Caddie);
