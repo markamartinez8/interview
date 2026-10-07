@@ -41,3 +41,9 @@ Off by default. When turned on, Caddie sends text (never video or audio) to Anth
 
 The model defaults to `claude-sonnet-5-5`; override with `CADDIE_MODEL`. The server listens on 127.0.0.1 only and rejects cross-origin requests.
 `CADDIE_FAKE_AI=1` returns canned responses for testing without a key.
+
+## Shareable demo
+
+`npm run build:demo` creates a `dist/` folder (about 30 MB) that works on any static host, with no server.
+Upload that folder to, for example, Netlify Drop (https://app.netlify.com/drop) to get a link anyone can open.
+Each visitor's sessions, recordings and transcripts stay in their own browser. The optional AI features need the local server and are hidden on a static host.

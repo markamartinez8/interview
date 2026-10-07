@@ -12,7 +12,7 @@
       <h1>Practice the interview <em>before it counts.</em></h1>
       <p class="lead">Meet Caddie, a virtual interviewer who asks real questions, waits while you answer, and gives you a straight read on your speech, eye contact and posture. Or rehearse a presentation and get the same feedback.</p>
       <div class="row"><a class="btn btn-primary btn-lg" href="#/app">Start practicing</a><a class="btn btn-ghost btn-lg" href="#/value">See what you get</a></div>
-      <p class="small muted">No account needed in this preview. Your sessions stay on your device.</p></div>
+      <p class="small muted">No account needed. Best in Chrome or Edge on a computer with a camera and microphone. Your sessions stay on your device.</p></div>
     ${mockTiles}</div></section>
   <section class="section alt"><div class="container"><div class="section-head"><span class="eyebrow">How it works</span><h2>From setup to feedback in one sitting</h2></div>
     <div class="steps">

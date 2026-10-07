@@ -5,7 +5,8 @@
   "description": "Caddie: practice interviews with a virtual interviewer",
   "scripts": {
     "start": "node server.js",
-    "postinstall": "node scripts/fetch-models.js"
+    "postinstall": "node scripts/fetch-models.js",
+    "build:demo": "node scripts/build-demo.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

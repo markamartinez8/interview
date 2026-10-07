@@ -72,7 +72,8 @@
       if (info.available) {
         card.innerHTML = `<label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-fu" ${C.store.getPrefs().aiConsent ? 'checked' : ''} style="margin-top:.25rem"><span><b>Let Caddie ask AI follow-up questions</b><br><span class="small muted">${C.disclosure.followups}</span></span></label>`;
         $('#ai-fu').addEventListener('change', (e) => C.store.setPrefs({ ...C.store.getPrefs(), aiConsent: e.target.checked }));
-      } else card.innerHTML = '<p class="small muted"><b>AI follow-ups are off.</b> Caddie will ask only the questions on your list. To turn them on, add an Anthropic key in <a href="#/app/settings">Settings</a>.</p>';
+      } else if (info.offline) card.hidden = true;
+      else card.innerHTML = '<p class="small muted"><b>AI follow-ups are off.</b> Caddie will ask only the questions on your list. To turn them on, add an Anthropic key in <a href="#/app/settings">Settings</a>.</p>';
     });
     requestMedia();
     $('#join').addEventListener('click', () => { if (!S.started) enterRoom(); });
