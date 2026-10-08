@@ -41,6 +41,15 @@ window.Caddie = window.Caddie || { views: {} };
     getLastSetup: () => LS.get('caddie.lastSetup', null),
     setLastSetup: (s) => LS.set('caddie.lastSetup', s),
 
+    // Recruiter roles (kept in this browser for now)
+    getRoles: () => LS.get('caddie.roles', []),
+    saveRole(role) {
+      const all = LS.get('caddie.roles', []); const i = all.findIndex((r) => r.id === role.id);
+      if (i >= 0) all[i] = role; else all.unshift(role);
+      LS.set('caddie.roles', all);
+    },
+    deleteRole(id) { LS.set('caddie.roles', LS.get('caddie.roles', []).filter((r) => r.id !== id)); },
+
     async saveSession(s) { mem.sessions.set(s.id, s); await run('sessions', 'readwrite', (st) => st.put(s)); },
     async getSession(id) { return (await run('sessions', 'readonly', (st) => st.get(id))) || mem.sessions.get(id) || null; },
     async listSessions() {
@@ -61,12 +70,25 @@ window.Caddie = window.Caddie || { views: {} };
     uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
     fmtDur(sec) { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return `${m}:${String(s).padStart(2, '0')}`; },
     fmtDate: (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+    fmtDateTime: (t) => new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
     download(filename, blob) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = filename;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
+    },
+    // Full-screen "3, 2, 1" before recording starts. Returns a cancel function.
+    countdown(seconds, onDone, onCancel) {
+      const el = document.createElement('div'); el.className = 'countdown'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-label', 'Recording starts soon');
+      el.innerHTML = '<div class="cd-box"><div class="cd-label">Recording starts in</div><div class="cd-num" aria-live="assertive"></div><button class="btn btn-ghost btn-sm cd-cancel" type="button">Cancel</button></div>';
+      document.body.appendChild(el);
+      const num = el.querySelector('.cd-num'); let n = seconds, timer;
+      const finish = (go) => { clearTimeout(timer); el.remove(); if (go) onDone(); else if (onCancel) onCancel(); };
+      const tick = () => { if (n <= 0) return finish(true); num.textContent = n; num.classList.remove('pop'); void num.offsetWidth; num.classList.add('pop'); n--; timer = setTimeout(tick, 1000); };
+      el.querySelector('.cd-cancel').addEventListener('click', () => finish(false));
+      tick();
+      return () => finish(false);
     },
     toast(msg) {
       const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;

@@ -76,7 +76,7 @@
       else card.innerHTML = '<p class="small muted"><b>AI follow-ups are off.</b> Caddie will ask only the questions on your list. To turn them on, add an Anthropic key in <a href="#/app/settings">Settings</a>.</p>';
     });
     requestMedia();
-    $('#join').addEventListener('click', () => { if (!S.started) enterRoom(); });
+    $('#join').addEventListener('click', () => { if (S.started || S.cancelCd) return; $('#join').disabled = true; S.cancelCd = C.util.countdown(3, () => { S.cancelCd = null; enterRoom(); }, () => { S.cancelCd = null; updateJoin(); }); });
 
     // ---------------- live room ----------------
     function enterRoom() {
@@ -305,6 +305,7 @@
 
     return {
       destroy() {
+        if (S.cancelCd) S.cancelCd();
         S.run++; S.finishing = true; C.voice.cancel(); S.timers.forEach(clearInterval);
         if (S.avatar) S.avatar.destroy();
         try { S.recorder && S.recorder.state !== 'inactive' && S.recorder.stop(); } catch { /* ignore */ }

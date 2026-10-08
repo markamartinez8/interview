@@ -259,3 +259,56 @@ table.logs th { color: var(--text-muted); font-size: .78rem; text-transform: upp
 .tile.solo { aspect-ratio: 16 / 9; }
 @media (max-width: 900px) { .dash-cols { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .kpi { grid-template-columns: 1fr auto; } .kpi-side { grid-column: 1 / -1; justify-content: space-between; } }
+
+/* Footer: recruiter link bottom right */
+.site-footer .container { align-items: flex-end; }
+.foot-left { display: flex; flex-direction: column; gap: .2rem; }
+.foot-link { color: var(--text-muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.foot-link:hover { color: var(--text-default); }
+
+/* Dashboard: sessions grouped by name */
+.sgroups { display: flex; flex-direction: column; gap: .5rem; }
+.sgroup { border: 1px solid var(--border-default); border-radius: var(--radius); padding: 0 .9rem; background: var(--bg-surface); }
+.sgroup[open] { padding-bottom: .3rem; }
+.sgroup > summary { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .75rem; padding: .75rem 0; cursor: pointer; list-style: none; }
+.sgroup > summary::-webkit-details-marker { display: none; }
+.sgroup > summary::before { content: "▸"; color: var(--color-primary); transition: transform .12s; }
+.sgroup[open] > summary::before { transform: rotate(90deg); }
+.sg-name { font-weight: 700; }
+.sg-meta { color: var(--text-muted); font-size: .85rem; flex: 1 1 10rem; }
+
+/* Presentation summary: recording beside transcript */
+.rec-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; margin-bottom: 1rem; align-items: start; }
+.rec-video { width: 100%; aspect-ratio: 16 / 9; background: var(--room); border-radius: var(--radius); display: block; }
+@media (max-width: 800px) { .rec-grid { grid-template-columns: 1fr; } }
+
+/* Countdown before recording */
+.countdown { position: fixed; inset: 0; z-index: 100; background: rgba(20, 23, 31, .86); display: flex; align-items: center; justify-content: center; }
+.cd-box { text-align: center; color: #fff; display: flex; flex-direction: column; align-items: center; gap: .6rem; }
+.cd-label { font-size: 1.1rem; letter-spacing: .06em; text-transform: uppercase; color: #C8CCDA; }
+.cd-num { font-family: var(--font-display); font-size: clamp(6rem, 22vw, 11rem); font-weight: 750; line-height: 1; min-height: 1em; }
+.cd-num { pointer-events: none; }
+.cd-cancel { position: relative; z-index: 1; margin-top: 1.5rem; }
+.cd-num.pop { animation: cdpop .9s ease-out; }
+@keyframes cdpop { 0% { transform: scale(1.25); opacity: .2; } 25% { transform: scale(1); opacity: 1; } 100% { transform: scale(.92); opacity: .85; } }
+
+/* Recruiter area: deep red replaces indigo as the primary color */
+.theme-recruiter {
+  --color-primary: #A30000; --color-primary-hover: #7D0000; --color-primary-bright: #CC0000; --color-primary-tint: #FDECEC;
+  --link: #A30000; --focus-ring: #CC0000;
+}
+.theme-recruiter .site-header { border-top: 4px solid var(--color-primary); }
+.theme-recruiter .cta-card p { color: #F7CFCF; }
+.theme-recruiter .cta-card .btn { color: var(--color-primary); }
+.theme-recruiter .badge { background: var(--color-primary); color: #fff; }
+.roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+.role-jd { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.role-qs summary { cursor: pointer; font-weight: 650; color: var(--color-primary); margin-top: .6rem; }
+.role-qs ol { margin: .5rem 0 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .4rem; font-size: .94rem; }
+.q-editor { display: flex; flex-direction: column; gap: .5rem; }
+.qrow-edit { display: grid; grid-template-columns: 1.6rem 1fr auto; gap: .5rem; align-items: center; }
+.qrow-edit .qnum { color: var(--text-muted); font-weight: 700; text-align: right; }
+.qbtns { display: flex; gap: .3rem; }
+@media (max-width: 600px) { .qrow-edit { grid-template-columns: 1.6rem 1fr; } .qbtns { grid-column: 2; } }
+.role .card-title { display: block; }
+.role .card-title h3 { margin-bottom: .15rem; }

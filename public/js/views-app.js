@@ -1,7 +1,7 @@
 // Signed-in screens: dashboard, setup, summary, settings.
 (function (C) {
   const V = C.views;
-  const { esc, fmtDur, fmtDate, uid } = C.util;
+  const { esc, fmtDur, fmtDate, fmtDateTime, uid } = C.util;
   const chip = (score) => { const l = C.label(score); return `<span class="chip ${l.cls}">${l.text}${score != null ? ` ${score}` : ''}</span>`; };
   const CAT = { speech: 'Speech', face: 'Face', body: 'Body', qa: 'Answers' };
   const scoreChips = (s, kind) => (kind === 'presentation' ? ['speech', 'face', 'body'] : ['speech', 'face', 'body', 'qa']).map((k) => `<span class="chip ${C.label(s[k]).cls}">${CAT[k]} ${s[k] == null ? '—' : s[k]}</span>`).join('');
@@ -18,11 +18,24 @@
     : `<span class="trend ${k.trend}">${k.trend === 'up' ? '▲' : k.trend === 'down' ? '▼' : '◆'} ${k.trend === 'steady' ? 'Steady' : `${k.delta > 0 ? '+' : ''}${k.delta} pts`}</span>`;
   const kpiRow = (k) => `<div class="kpi ${k.key === 'overall' ? 'overall' : ''}"><div class="kpi-name">${esc(k.name)}</div><div class="kpi-val">${k.avg == null ? '—' : k.avg}</div><div class="kpi-side">${trendHTML(k)}${sparkline(k.series)}</div></div>`;
 
+  // Sessions with the same name are grouped; each session shows its own date and time.
+  function groupByName(list) {
+    const map = new Map();
+    for (const s of list) { // list is newest first
+      const name = C.sessionName(s).trim(), key = name.toLowerCase();
+      if (!map.has(key)) map.set(key, { name, items: [] });
+      map.get(key).items.push(s);
+    }
+    return [...map.values()];
+  }
   function sessionsTile(q, kind) {
     const noun = kind === 'presentation' ? 'Presentation' : 'Interview';
-    const rows = q.list.slice(0, 5).map((s) => `<div class="session-row"><div><a href="#/app/summary/${s.id}"><b>${esc(C.sessionName(s))}</b></a><div class="muted small">${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)}${kind === 'interview' ? ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}${s.completed ? '' : ' · ended early'}` : s.completed ? '' : ' · ended early'}</div></div><div class="scores">${scoreChips(s.scores, kind)}</div></div>`).join('');
+    const groups = groupByName(q.list);
+    const row = (s) => `<div class="session-row"><div><a href="#/app/summary/${s.id}"><b>${fmtDateTime(s.createdAt)}</b></a><div class="muted small">${fmtDur(s.metrics.duration)}${kind === 'interview' ? ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}` : ''}${s.completed ? '' : ' · ended early'}</div></div><div class="scores">${scoreChips(s.scores, kind)}</div></div>`;
+    const group = (g, n) => { const latest = g.items[0], ov = latest.scores && latest.scores.overall;
+      return `<details class="sgroup" ${n === 0 ? 'open' : ''}><summary><span class="sg-name">${esc(g.name)}</span><span class="sg-meta">${g.items.length} session${g.items.length > 1 ? 's' : ''} · latest ${fmtDateTime(latest.createdAt)}</span>${ov != null ? `<span class="chip ${C.label(ov).cls}">Latest ${ov}</span>` : ''}</summary><div class="session-list">${g.items.map(row).join('')}</div></details>`; };
     return `<div class="card"><div class="card-title"><h3>${noun} Sessions</h3>${q.count ? `<span class="muted small">${q.count} · ${fmtDur(q.totalSec)} practiced</span>` : ''}</div>
-      ${q.count ? `<div class="session-list">${rows}</div>${q.count > 5 ? '<p class="small muted" style="margin-top:.7rem"><a href="#/app/settings">See all sessions in Profile and Settings</a></p>' : ''}`
+      ${q.count ? `<div class="sgroups">${groups.slice(0, 5).map(group).join('')}</div>${groups.length > 5 ? '<p class="small muted" style="margin-top:.7rem"><a href="#/app/settings">See all sessions in Profile and Settings</a></p>' : ''}`
       : `<div class="empty"><strong>No ${noun.toLowerCase()} sessions yet</strong>${kind === 'presentation' ? 'Practice a talk and your sessions will be listed here.' : 'Your sessions and scores will appear here after your first run.'}</div>`}</div>`;
   }
   function quickTile(q, kind) {
@@ -41,8 +54,8 @@
     const sessions = await C.store.listSessions();
     const qi = C.quick(sessions, 'interview'), qp = C.quick(sessions, 'presentation');
     root.innerHTML = `<section class="container page">
-      <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Dashboard</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">${profile.name ? `Welcome back, ${esc(profile.name.split(' ')[0])}` : 'Welcome to Caddie'}</h1></div></div>
-      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Start your first session'}</h2><p>${sessions.length ? 'Run an interview with Caddie or practice a presentation.' : 'Practice an interview with Caddie, or rehearse a talk and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
+      <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Welcome back</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">${profile.name.trim() ? `${esc(profile.name.trim().split(/\s+/)[0])}'s Dashboard` : 'Your Dashboard'}</h1></div></div>
+      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Start your first session'}</h2><p>${sessions.length ? 'Practice makes perfect! Begin a new session.' : 'Practice an interview with Caddie, or rehearse a talk and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
       <div class="dash-cols">
         <div class="stack"><h2 class="col-title">Interviews</h2>${sessionsTile(qi, 'interview')}${quickTile(qi, 'interview')}</div>
         <div class="stack"><h2 class="col-title">Presentations</h2>${sessionsTile(qp, 'presentation')}${quickTile(qp, 'presentation')}</div>
@@ -174,26 +187,41 @@
     const card = (title, key, rows, note) => `<div class="card score"><div class="card-title" style="margin:0"><h3>${title}</h3>${chip(sc[key])}</div><div class="score-num">${sc[key] == null ? '—' : `${sc[key]}<small> / 100</small>`}</div><div class="bar ${C.label(sc[key]).cls}"><div style="width:${sc[key] || 0}%"></div></div>${note ? `<p class="small muted">${note}</p>` : ''}${rowsHTML(rows)}</div>`;
     const caps = m.capabilities, pres = C.sessionKind(s) === 'presentation';
     const pq = m.perQuestion[0] || {};
+    const transcriptCard = `<div class="card"><div class="card-title"><h3>Transcript</h3><span class="muted small">${pq.words || 0} words${pq.wpm ? ` · ${pq.wpm} wpm` : ''}${pq.eyePct != null ? ` · eye contact ${pq.eyePct}%` : ''}</span></div>${pq.answer ? `<blockquote style="margin:0;padding:.6rem .9rem;background:var(--color-cloud);border-left:3px solid var(--color-secondary-bright);border-radius:0 8px 8px 0;color:var(--text-muted);font-size:.94rem">${esc(pq.answer)}</blockquote>` : `<p class="muted">${caps.speech ? 'No speech was captured.' : 'No transcript. This browser has no speech recognition. Chrome or Edge work best.'}</p>`}</div>`;
+    const qaCard = `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Caddie (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`;
+    const actionsCard = `<div class="card"><div class="card-title"><h3>Action items</h3></div><ol class="actions-list">${s.actions.length ? s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('') : '<li>Not enough data was captured to suggest changes.</li>'}</ol></div>`;
+    const nextCard = `<div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">${pres ? 'Same presentation' : 'Same questions'}</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>`;
+    const note = '<p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.</p>';
+    const recCard = `<div class="card"><div class="card-title"><h3>Recording</h3><span class="muted small">${fmtDur(m.duration)}</span></div>${s.hasRecording ? '<video id="rec-video" class="rec-video" controls playsinline preload="metadata"></video><p class="small muted" id="rec-note" style="margin:.5rem 0 0"></p>' : '<div class="empty"><strong>No recording saved</strong>This session was not recorded, or the recording is not available in this browser.</div>'}</div>`;
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">${pres ? 'Presentation summary' : 'Summary'}</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${esc(C.sessionName(s))}</h1>
-        <div class="muted">${fmtDate(s.createdAt)} · ${fmtDur(m.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}${s.completed ? '' : ' · ended early'}</div>
+        <div class="muted">${fmtDateTime(s.createdAt)} · ${fmtDur(m.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}${s.completed ? '' : ' · ended early'}</div>
         ${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? `<div class="row" style="gap:.4rem">${s.ai.qSource === 'claude' ? '<span class="badge">Questions written by Claude (AI)</span>' : ''}${s.ai.followUps ? `<span class="badge">${s.ai.followUps} AI follow-up${s.ai.followUps > 1 ? 's' : ''}</span>` : ''}</div>` : ''}</div>
         <div class="row"><button class="btn btn-ghost" id="dl-sum">Download summary</button><button class="btn btn-ghost" id="dl-rec" ${s.hasRecording ? '' : 'disabled'}>Download recording</button><button class="btn btn-ghost" id="dl-tr">Download transcript</button></div></div>
       ${!caps.speech || !caps.vision ? `<div class="callout warn" style="margin-bottom:1rem">${[!caps.speech ? 'Speech measures need speech recognition, which this browser did not provide. Chrome or Edge work best.' : '', caps.camera && !caps.vision ? 'Face and posture analysis could not load.' : '', !caps.camera ? 'No camera was used, so face and posture were not measured.' : ''].filter(Boolean).join(' ')}</div>` : ''}
       <div class="score-grid">
         ${card('Speech style', 'speech', d.speech)}${card('Facial expression', 'face', d.face, 'Eye contact drives this score. Smiling and expressiveness are shown for information.')}${card('Body language', 'body', d.body)}</div>
-      <div class="dash-grid"><div class="stack">
-        ${pres ? `<div class="card"><div class="card-title"><h3>Transcript</h3><span class="muted small">${pq.words || 0} words${pq.wpm ? ` · ${pq.wpm} wpm` : ''}${pq.eyePct != null ? ` · eye contact ${pq.eyePct}%` : ''}</span></div>${pq.answer ? `<blockquote style="margin:0;padding:.6rem .9rem;background:var(--color-cloud);border-left:3px solid var(--color-secondary-bright);border-radius:0 8px 8px 0;color:var(--text-muted);font-size:.94rem">${esc(pq.answer)}</blockquote>` : `<p class="muted">${caps.speech ? 'No speech was captured.' : 'No transcript. This browser has no speech recognition. Chrome or Edge work best.'}</p>`}</div>` : `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Caddie (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`}
-        <div class="stack"><div class="card"><div class="card-title"><h3>Action items</h3></div><ol class="actions-list">${s.actions.length ? s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('') : '<li>Not enough data was captured to suggest changes.</li>'}</ol></div>
-          <div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">${pres ? 'Same presentation' : 'Same questions'}</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>
-          <p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.</p></div></div></section>`;
+      ${pres ? `<div class="rec-grid">${recCard}${transcriptCard}</div>
+      <div class="dash-grid"><div class="stack">${actionsCard}</div><div class="stack">${nextCard}${note}</div></div>`
+      : `<div class="dash-grid"><div class="stack">${qaCard}</div><div class="stack">${actionsCard}${nextCard}${note}</div></div>`}</section>`;
     const $ = (x) => root.querySelector(x), stamp = new Date(s.createdAt).toISOString().slice(0, 10);
     $('#dl-sum').addEventListener('click', () => C.util.download(`caddie-summary-${stamp}.html`, new Blob([C.reportHTML(s)], { type: 'text/html' })));
     $('#dl-tr').addEventListener('click', () => C.util.download(`caddie-transcript-${stamp}.txt`, new Blob([C.transcriptText(s)], { type: 'text/plain' })));
     $('#dl-rec').addEventListener('click', async () => { const b = await C.store.getRecording(s.id); if (!b) return C.util.toast('The recording is not available in this browser.'); C.util.download(`caddie-recording-${stamp}.${/mp4/.test(b.type) ? 'mp4' : 'webm'}`, b); });
+    let recUrl = null;
+    if (pres && s.hasRecording) {
+      const video = $('#rec-video');
+      C.store.getRecording(s.id).then((blob) => {
+        if (!blob || !video.isConnected) { const n = $('#rec-note'); if (n) n.textContent = 'The recording is not available in this browser.'; return; }
+        recUrl = URL.createObjectURL(blob); video.src = recUrl;
+        // Browser recordings often report an unknown length; seeking to the end once makes the scrub bar work.
+        video.addEventListener('loadedmetadata', () => { if (video.duration === Infinity) { video.currentTime = 1e101; video.addEventListener('timeupdate', function f() { video.removeEventListener('timeupdate', f); video.currentTime = 0; }); } });
+      });
+    }
     $('#retry').addEventListener('click', () => { $('#retry-opts').hidden = false; });
     $('#retry-same').addEventListener('click', () => { C.pending = { ...s.setup }; location.hash = pres ? '#/app/present' : '#/app/interview'; });
     $('#retry-change').addEventListener('click', () => { C.store.setLastSetup(pres ? { agent: 'present', title: s.setup.title } : { source: s.setup.source, mode: s.setup.mode, jobName: s.setup.jobName, jd: s.setup.jd, custom: s.setup.custom, withOpener: s.setup.withOpener }); location.hash = '#/app/setup'; });
+    return { destroy() { if (recUrl) URL.revokeObjectURL(recUrl); } };
   };
 
   // ---------------- Settings ----------------
@@ -216,7 +244,7 @@
           <div class="field"><label for="p-speed">Speaking speed: <span id="p-speed-v">${(+prefs.voiceSpeed || 1).toFixed(2)}x</span></label><input type="range" id="p-speed" min="0.85" max="1.15" step="0.05" value="${+prefs.voiceSpeed || 1}"></div>
           <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test">Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
         <div class="card"><div class="card-title"><h3>Session logs</h3><span class="muted small">${sessions.length} saved on this device</span></div>
-          ${sessions.length ? `<div class="scroll-x"><table class="logs"><thead><tr><th>Date</th><th>Session</th><th>Scores</th><th>Files</th><th></th></tr></thead><tbody>${sessions.map((s) => `<tr><td>${fmtDate(s.createdAt)}<br><span class="muted small">${fmtDur(s.metrics.duration)}</span></td><td>${esc(C.sessionName(s))}<br><span class="muted small">${C.sessionKind(s) === 'presentation' ? 'Presentation' : `Interview · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`}</span></td><td>${scoreChips(s.scores, C.sessionKind(s))}</td>
+          ${sessions.length ? `<div class="scroll-x"><table class="logs"><thead><tr><th>Date</th><th>Session</th><th>Scores</th><th>Files</th><th></th></tr></thead><tbody>${sessions.map((s) => `<tr><td>${fmtDateTime(s.createdAt)}<br><span class="muted small">${fmtDur(s.metrics.duration)}</span></td><td>${esc(C.sessionName(s))}<br><span class="muted small">${C.sessionKind(s) === 'presentation' ? 'Presentation' : `Interview · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`}</span></td><td>${scoreChips(s.scores, C.sessionKind(s))}</td>
             <td><a href="#/app/summary/${s.id}">Summary</a><br><a href="#" data-rec="${s.id}" ${s.hasRecording ? '' : 'hidden'}>Recording</a><br><a href="#" data-tr="${s.id}">Transcript</a></td><td><button class="btn btn-ghost btn-sm" data-del="${s.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No sessions yet</strong>Completed interviews are listed here with their summary, recording and transcript.</div>'}</div></div>
       <div class="stack"><div class="card"><h3 style="margin-bottom:.6rem">Credits and subscription</h3><dl class="kv"><dt>Plan</dt><dd>Preview (free)</dd><dt>Sessions used</dt><dd>${sessions.length}</dd><dt>Limit</dt><dd>None</dd></dl><p class="small muted" style="margin-top:.7rem">Paid plans are not available yet. See <a href="#/plans">Plans</a>.</p></div>
         <div class="card stack" id="ai-card"><h3>AI features</h3>

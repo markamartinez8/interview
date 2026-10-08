@@ -57,7 +57,7 @@
     function failed(msg) { $('#prep-err').textContent = msg; $('#retry').hidden = false; set('#ck-cam', 'Off', 'low'); set('#ck-mic', 'Off', 'low'); $('#pv-msg').textContent = 'Camera and microphone are off.'; }
     $('#retry').addEventListener('click', requestMedia);
     requestMedia();
-    $('#join').addEventListener('click', () => { if (!S.started && S.mediaOk) enterRoom(); });
+    $('#join').addEventListener('click', () => { if (S.started || S.cancelCd || !S.mediaOk) return; $('#join').disabled = true; S.cancelCd = C.util.countdown(3, () => { S.cancelCd = null; enterRoom(); }, () => { S.cancelCd = null; const j = $('#join'); if (j) j.disabled = !S.mediaOk; }); });
 
     // ---------------- the room: only you ----------------
     const elapsed = () => (performance.now() - S.t0 - S.pausedMs - (S.paused ? performance.now() - S.pauseStart : 0)) / 1000;
@@ -145,6 +145,7 @@
 
     return {
       destroy() {
+        if (S.cancelCd) S.cancelCd();
         S.finishing = true; S.timers.forEach(clearInterval);
         try { S.recorder && S.recorder.state !== 'inactive' && S.recorder.stop(); } catch { /* ignore */ }
         if (S.analyzer) S.analyzer.stop();
