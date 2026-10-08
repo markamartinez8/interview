@@ -7,15 +7,17 @@
   function header(route, minimal) {
     const inApp = route.startsWith('/app');
     if (route.startsWith('/recruiter')) {
-      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Recruiter</span></a><nav class="nav" aria-label="Recruiter"><a href="#/recruiter" ${route === '/recruiter' ? 'aria-current="page"' : ''}>Roles</a><a href="#/" >Back to Caddie</a><a class="btn btn-primary btn-sm" href="#/recruiter/new">Create new role</a></nav></div></header>`;
+      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Recruiter</span></a><nav class="nav" aria-label="Recruiter"><a href="#/recruiter" ${route === '/recruiter' ? 'aria-current="page"' : ''}>Roles</a><a href="#/recruiter/settings" ${route === '/recruiter/settings' ? 'aria-current="page"' : ''}>Profile and Settings</a><a class="btn btn-primary btn-sm" href="#/recruiter/new">Create new role</a></nav></div></header>`;
     }
+
     const link = (href, text, cur) => `<a href="${href}" ${cur ? 'aria-current="page"' : ''}>${text}</a>`;
     const nav = minimal ? '' : inApp
       ? `${link('#/app', 'Dashboard', route === '/app')}${link('#/app/settings', 'Profile and Settings', route === '/app/settings')}<a class="btn btn-primary btn-sm" href="#/app/setup">Begin session</a>`
       : `${link('#/value', 'Value', route === '/value')}${link('#/about', 'About', route === '/about')}${link('#/plans', 'Plans', route === '/plans')}<a class="btn btn-primary btn-sm" href="#/app">Start practicing</a>`;
     return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
   }
-  const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Caddie · Interview practice</span><span class="small">Sessions are stored in your browser. Optional AI features send text, never video or audio, to Anthropic&rsquo;s Claude.</span></div>${route.startsWith('/recruiter') ? '<a class="foot-link" href="#/">Back to Caddie</a>' : '<a class="foot-link" href="#/recruiter">Recruiter login</a>'}</div></footer>`;
+  // The recruiter link appears only on the main homepage.
+  const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Caddie · Interview practice</span><span class="small">Sessions are stored in your browser. Optional AI features send text, never video or audio, to Anthropic&rsquo;s Claude.</span></div>${route === '/' ? '<a class="foot-link" href="#/recruiter">Recruiter login</a>' : ''}</div></footer>`;
 
   async function route() {
     const hash = location.hash.replace(/^#/, '') || '/';
@@ -23,7 +25,7 @@
     if (current && current.destroy) { try { current.destroy(); } catch { /* ignore */ } }
     current = null;
     const publicPages = { '/': 'home', '/value': 'value', '/about': 'about', '/plans': 'plans' };
-    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings', '/recruiter': 'recruiter', '/recruiter/new': 'recruiterEdit', '/recruiter/edit': 'recruiterEdit' };
+    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings', '/recruiter': 'recruiter', '/recruiter/new': 'recruiterEdit', '/recruiter/settings': 'recruiterSettings', '/recruiter/edit': 'recruiterEdit' };
     let key = path;
     let params = rest;
     if (path === '/app/summary') { key = '/app/summary'; params = rest; }

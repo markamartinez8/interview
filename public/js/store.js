@@ -41,6 +41,16 @@ window.Caddie = window.Caddie || { views: {} };
     getLastSetup: () => LS.get('caddie.lastSetup', null),
     setLastSetup: (s) => LS.set('caddie.lastSetup', s),
 
+    // Recruiter profile and default settings, applied to every role that has not set its own
+    getRecruiter: () => ({ name: '', email: '', company: '', cameraRequired: false, minutesPerQuestion: null, ...LS.get('caddie.recruiter', {}) }),
+    setRecruiter: (r) => LS.set('caddie.recruiter', r),
+    getRole: (id) => LS.get('caddie.roles', []).find((r) => r.id === id) || null,
+    // Applicant fields on a role: {id, name, email, completed, sessionId, completedAt}
+    updateApplicant(roleId, applicantId, patch) {
+      const all = LS.get('caddie.roles', []); const r = all.find((x) => x.id === roleId); if (!r) return;
+      const ap = (r.applicants || []).find((x) => x.id === applicantId); if (!ap) return;
+      Object.assign(ap, patch); LS.set('caddie.roles', all);
+    },
     // Recruiter roles (kept in this browser for now)
     getRoles: () => LS.get('caddie.roles', []),
     saveRole(role) {

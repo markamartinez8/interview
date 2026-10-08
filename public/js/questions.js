@@ -1,6 +1,6 @@
 // Builds the interview: always "Walk me through your resume" first, then the 2 to 4 questions most relevant to the role and job description.
 (function (C) {
-  const OPENER = "Let's start with your background. Walk me through your resume.";
+  const OPENER = 'Tell me about yourself and walk me through your resume.';
 
   const FAMILIES = [
     { name: 'engineering', re: /engineer|developer|programmer|software|devops|sre|data scientist|machine learning|\bml\b|\bqa\b/i, qs: [
@@ -84,7 +84,8 @@
     analyze: (jd, role) => C.jd.analyze(jd || '', role || ''),
 
     // Returns { questions: [opener, ...2-4 ranked questions], analysis }.
-    generate({ jobName, jd }) {
+    // Ranked candidate questions for a role and posting (best first).
+    candidates(jobName, jd) {
       const role = jobName || '';
       const a = C.jd.analyze(jd || '', role);
       const roleTok = new Set(tokens(role));
@@ -104,12 +105,31 @@
       if (a.seniority && /senior|staff|principal|lead|head|director|vp|manager/.test(a.seniority)) add(SENIOR, 'level', 2.4, `The posting is for a ${a.seniority} role`);
       else if (a.seniority && /junior|entry|intern|associate/.test(a.seniority)) add(JUNIOR, 'level', 2.4, `The posting is for a ${a.seniority} role`);
       BEHAVIORAL.forEach((q, i) => add(q, 'behavioral', 1.0 - i * 0.05, 'Asked in most interviews'));
+      return { cand: cand.sort((x, y) => y.score - x.score), a, fam };
+    },
+
+    // Up to `n` suggested questions from the job description, skipping any in `exclude`. Needs a real posting.
+    suggest({ jobName, jd, n = 5, exclude = [] }) {
+      if (!jd || jd.trim().length < 40) return [];
+      const { cand } = C.questions.candidates(jobName, jd);
+      const skip = new Set(exclude.map((x) => x.trim().toLowerCase()).concat(OPENER.toLowerCase()));
+      const limit = { 'jd-do': 3, 'jd-need': 3, skill: 2, role: 2, level: 1, behavioral: 1 }, count = {}, out = [];
+      for (const c of cand) {
+        if (out.length >= n) break;
+        if (skip.has(c.text.trim().toLowerCase()) || (count[c.kind] || 0) >= limit[c.kind]) continue;
+        out.push({ text: c.text, why: c.why, kind: c.kind }); count[c.kind] = (count[c.kind] || 0) + 1;
+      }
+      return out;
+    },
+
+    generate({ jobName, jd }) {
+      const { cand, a, fam } = C.questions.candidates(jobName, jd);
 
       const rich = a.resp.length + a.req.length >= 3;
       const want = rich ? 4 : a.resp.length + a.req.length > 0 || fam ? 3 : 2;
       const picked = [], count = {};
       const limit = { 'jd-do': 2, 'jd-need': 2, skill: 1, role: 2, level: 1, behavioral: 2 };
-      for (const c of cand.sort((x, y) => y.score - x.score)) {
+      for (const c of cand) {
         if (picked.length >= want) break;
         if ((count[c.kind] || 0) >= limit[c.kind]) continue;
         picked.push(c); count[c.kind] = (count[c.kind] || 0) + 1;

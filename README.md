@@ -25,7 +25,7 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/js/questions.js`: picks the 3 to 4 most relevant questions; "Walk me through your resume" is always first.
 - `public/js/avatar.js`: Caddie's animated face (lip-sync, blinks, gaze, nods).
 - `public/js/voice.js`: Caddie's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
-- `public/js/views-recruiter.js`: Recruiter Dashboard (footer link, no login yet): create roles with a job description and up to 10 questions. Uses a deep-red theme (`.theme-recruiter`).
+- `public/js/views-recruiter.js`: Recruiter area (link on the homepage footer, no login yet): roles with status, job description, a default opening question plus up to 10 more (with suggestions from the job description), applicants, and per-role settings (camera required, minutes per question) that default to the recruiter's Profile and Settings. Uses a deep-red theme (`.theme-recruiter`).
 - `public/js/presentation.js`: Practice Presenting: a green room and a room where you see only yourself.
 - `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
 

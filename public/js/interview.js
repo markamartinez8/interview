@@ -22,8 +22,8 @@
           <div style="margin-top:1rem"><div class="row" style="justify-content:space-between"><span class="label">Microphone level</span><span class="small muted" id="mic-note">Say something to test</span></div><div class="meter"><div id="mic-meter"></div></div></div></div>
         <div class="stack">
           <div class="card"><h3 style="margin-bottom:.7rem">Your session</h3><dl class="kv">
-            <dt>Role</dt><dd>${esc(setup.jobName || 'Custom questions')}</dd><dt>Mode</dt><dd>${setup.mode === 'practice' ? 'Practice (live tips, pause and skip)' : 'Mock (tips after the interview)'}</dd>
-            <dt>Questions</dt><dd>${questions.length}</dd><dt>Caddie moves on after</dt><dd>${prefs.silenceSec} seconds of silence</dd></dl></div>
+            ${setup.applicantName ? `<dt>Applicant</dt><dd>${esc(setup.applicantName)}</dd>` : ''}<dt>Role</dt><dd>${esc(setup.jobName || 'Custom questions')}</dd><dt>Mode</dt><dd>${setup.mode === 'practice' ? 'Practice (live tips, pause and skip)' : 'Mock (tips after the interview)'}</dd>
+            <dt>Questions</dt><dd>${questions.length}</dd>${setup.cameraRequired ? '<dt>Camera</dt><dd>Required</dd>' : ''}${setup.minutesPerQuestion ? `<dt>Time per question</dt><dd>${setup.minutesPerQuestion} min</dd>` : ''}<dt>Caddie moves on after</dt><dd>${prefs.silenceSec} seconds of silence</dd></dl></div>
           <div class="card"><h3 style="margin-bottom:.7rem">Ready check</h3><ul class="checklist">
             <li><span>Camera</span><span id="ck-cam">${statusChip('Waiting', 'na')}</span></li><li><span>Microphone</span><span id="ck-mic">${statusChip('Waiting', 'na')}</span></li>
             <li><span>Caddie's voice</span><span id="ck-voice">${statusChip('Loading', 'na')}</span></li><li><span>Face and posture analysis</span><span id="ck-vis">${statusChip('Waiting', 'na')}</span></li>
@@ -44,6 +44,7 @@
         if (e.name === 'NotAllowedError' || e.name === 'SecurityError') return mediaFailed('Camera and microphone access was blocked. Allow access in your browser address bar and try again. Some embedded previews block it; use the full app.');
         try { stream = await md.getUserMedia({ audio }); video = false; } catch (e2) { return mediaFailed(e2.name === 'NotFoundError' ? 'No microphone was found. Connect one and try again.' : 'Could not start the microphone.'); }
       }
+      if (setup.cameraRequired && !(video && stream.getVideoTracks().length)) { stream.getTracks().forEach((t) => t.stop()); return mediaFailed('This interview requires a camera. Connect one, allow access, and try again.'); }
       S.stream = stream; S.hasVideo = video && stream.getVideoTracks().length > 0;
       const pv = $('#pv'); pv.srcObject = stream;
       $('#pv-msg').hidden = S.hasVideo; if (!S.hasVideo) $('#pv-msg').textContent = 'No camera found. You can still practice with audio.';
@@ -60,7 +61,7 @@
       }, 150);
       S.mediaOk = true; updateJoin();
     }
-    function mediaFailed(msg) { $('#prep-err').textContent = msg; $('#retry').hidden = false; $('#textonly').hidden = false; set('#ck-cam', 'Off', 'low'); set('#ck-mic', 'Off', 'low'); $('#pv-msg').textContent = 'Camera and microphone are off.'; }
+    function mediaFailed(msg) { $('#prep-err').textContent = msg; $('#retry').hidden = false; $('#textonly').hidden = !!setup.cameraRequired; set('#ck-cam', 'Off', 'low'); set('#ck-mic', 'Off', 'low'); $('#pv-msg').textContent = 'Camera and microphone are off.'; }
     $('#retry').addEventListener('click', requestMedia);
     $('#textonly').addEventListener('click', () => { S.textOnly = true; $('#prep-err').textContent = ''; $('#retry').hidden = true; $('#textonly').hidden = true; set('#ck-cam', 'Skipped', 'ok'); set('#ck-mic', 'Typing instead', 'ok'); set('#ck-vis', 'Needs camera', 'na'); S.mediaOk = true; updateJoin(); });
     const updateJoin = () => { const j = $('#join'); if (j) j.disabled = !S.mediaOk; };
@@ -86,7 +87,7 @@
       every(() => {}, 1000);
       const prevStream = S.stream;
       root.innerHTML = `<section class="container page"><div class="room">
-        <div class="room-top"><div class="row"><span class="badge">${esc(setup.jobName || 'Custom questions')}</span><span class="badge">${practice ? 'Practice' : 'Mock'}</span><span class="small" id="progress">Getting started</span></div>
+        <div class="room-top"><div class="row"><span class="badge">${esc(setup.jobName || 'Custom questions')}</span><span class="badge">${practice ? 'Practice' : 'Mock'}</span><span class="small" id="progress">Getting started</span><span class="small" id="qtime" aria-live="off"></span></div>
           <div class="row"><span class="small" id="timer">0:00</span><span class="rec" id="rec" ${S.stream ? '' : 'hidden'}>REC</span></div></div>
         <div class="room-main"><div>
           <div class="tiles"><div class="tile caddie"><svg id="caddie" role="img" aria-label="Caddie, your interviewer"></svg><span class="tag">Caddie · AI interviewer</span></div>
@@ -199,9 +200,16 @@
     }
     function waitAnswerEnd(run) {
       const bar = $('#silbar'), a = S.analyzer;
+      const limitMs = setup.minutesPerQuestion ? setup.minutesPerQuestion * 60000 : 0; // recruiter-set time per question
+      let used = 0, lastT = performance.now();
       return new Promise((resolve) => {
         const tick = setInterval(() => {
-          if (run !== S.run || S.nav || S.done) { clearInterval(tick); S.done = false; return resolve(); }
+          if (run !== S.run || S.nav || S.done) { clearInterval(tick); S.done = false; const q = $('#qtime'); if (q) q.textContent = ''; return resolve(); }
+          const nowT = performance.now(); if (!S.paused) used += nowT - lastT; lastT = nowT;
+          if (limitMs) {
+            const q = $('#qtime'); if (q) q.textContent = `Time left: ${fmtDur(Math.ceil((limitMs - used) / 1000))}`;
+            if (used >= limitMs) { S.timedOut = true; clearInterval(tick); bar.style.width = '0'; if (q) q.textContent = ''; return resolve(); }
+          }
           if (S.paused || S.textOnly || !a) { if (S.paused) bar.style.width = '0'; return; }
           // Optional extra time before the first word (Settings); after that, the normal silence window applies.
           const waitSec = prefs.silenceSec + (a.hasSpoken() ? 0 : (prefs.graceSec || 0)), silenceMs = waitSec * 1000;
@@ -258,6 +266,7 @@
             again = false;
             S.analyzer && S.analyzer.beginAnswer(i); await waitAnswerEnd(run); S.analyzer && S.analyzer.endAnswer();
             if (S.nav || S.paused || run !== S.run) break;
+            if (S.timedOut) { S.timedOut = false; await say('Thank you. That is the time for this question.'); break; }
             const f = await maybeFollowUp(i, run);
             if (f && !S.nav && run === S.run) { await say(f); again = !S.nav && !S.paused; }
             $('#status').textContent = '';
@@ -292,6 +301,7 @@
       const id = uid();
       const session = { id, createdAt: Date.now(), completed: complete, setup: { ...setup }, metrics, scores, actions, hasRecording: !!blob, ai: { qSource: setup.qSource || 'templates', followUps: S.followUps } };
       try { await C.store.saveSession(session); if (blob) await C.store.saveRecording(id, blob); } catch { /* summary still opens from memory */ }
+      if (setup.roleId && setup.applicantId) C.store.updateApplicant(setup.roleId, setup.applicantId, complete ? { completed: true, sessionId: id, completedAt: Date.now() } : { sessionId: id });
       C.pending = null; void run;
       location.hash = `#/app/summary/${id}`;
     }
