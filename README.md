@@ -48,3 +48,15 @@ The model defaults to `claude-sonnet-5-5`; override with `CADDIE_MODEL`. The ser
 `npm run build:demo` creates a `dist/` folder (about 30 MB) that works on any static host, with no server.
 Upload that folder to, for example, Netlify Drop (https://app.netlify.com/drop) to get a link anyone can open.
 Each visitor's sessions, recordings and transcripts stay in their own browser. The optional AI features need the local server and are hidden on a static host.
+
+## Ratings and admin analytics
+
+After a completed interview or presentation, Caddie asks for a 1 to 5 star rating and an optional comment.
+The footer on the homepage has an **Admin** link (username `caddie`, password `test` by default; change them with `CADDIE_ADMIN_USER` and `CADDIE_ADMIN_PASSWORD`).
+The admin page shows anonymous counts (people who visited the homepage, started and completed each workflow) and average ratings with comments.
+
+- Run with `npm start`: visits, starts, completions, ratings and comments from every visitor are saved by the server in `data/events.jsonl`.
+  When hosting the server for other people, set `CADDIE_PUBLIC=1` (analytics and admin only; the AI endpoints stay local-only).
+- On a plain static host (the `dist` demo), there is no server, so the admin page shows only activity from the browser you are using.
+
+Only an anonymous visitor id, the event type, and the rating and comment are collected. Never video, audio, transcripts or answers.

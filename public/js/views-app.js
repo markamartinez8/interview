@@ -179,6 +179,49 @@
   };
 
   // ---------------- Summary ----------------
+  // Asks for a 1 to 5 star rating and an optional comment after a completed session.
+  function ratingModal(s, kind, onClose) {
+    const noun = kind === 'presentation' ? 'presentation' : 'interview';
+    const wrap = document.createElement('div'); wrap.className = 'modal-wrap';
+    wrap.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rt-title">
+      <h2 id="rt-title" style="font-size:1.5rem">How was your ${noun} experience?</h2>
+      <p class="muted small" style="margin:.3rem 0 .8rem">Rate it from 1 to 5 stars.</p>
+      <div class="stars" role="radiogroup" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) => `<button type="button" role="radio" aria-checked="false" data-star="${n}" aria-label="${n} star${n > 1 ? 's' : ''}" tabindex="${n === 1 ? 0 : -1}">★</button>`).join('')}</div>
+      <div class="small muted" id="rt-label" style="min-height:1.3em" aria-live="polite"></div>
+      <div class="field" style="margin-top:.6rem"><label for="rt-comment">Comments (optional)</label><textarea id="rt-comment" maxlength="1000" style="min-height:90px" placeholder="What worked well? What should we improve?"></textarea></div>
+      <p class="small muted" style="margin:.6rem 0 0">Your rating and comment are shared with the Caddie team. Your video, audio and answers are not.</p>
+      <div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn btn-ghost" id="rt-skip" type="button">Not now</button><button class="btn btn-primary" id="rt-submit" type="button" disabled>Submit rating</button></div></div>`;
+    document.body.appendChild(wrap);
+    const LABELS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+    const stars = [...wrap.querySelectorAll('[data-star]')]; let chosen = 0;
+    const paint = (n) => stars.forEach((b, i) => b.classList.toggle('on', i < n));
+    const choose = (n) => { chosen = n; paint(n); stars.forEach((b, i) => { b.setAttribute('aria-checked', i + 1 === n); b.tabIndex = i + 1 === n ? 0 : -1; }); wrap.querySelector('#rt-label').textContent = `${n} star${n > 1 ? 's' : ''}: ${LABELS[n]}`; wrap.querySelector('#rt-submit').disabled = false; };
+    stars.forEach((b) => {
+      const n = +b.dataset.star;
+      b.addEventListener('click', () => choose(n));
+      b.addEventListener('mouseenter', () => paint(n)); b.addEventListener('mouseleave', () => paint(chosen));
+      b.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); const m = Math.min(5, (chosen || n) + 1); choose(m); stars[m - 1].focus(); } if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); const m = Math.max(1, (chosen || n) - 1); choose(m); stars[m - 1].focus(); } });
+    });
+    const close = async (rated) => {
+      s.ratingAsked = true;
+      if (rated) {
+        const comment = wrap.querySelector('#rt-comment').value.trim();
+        s.rating = { stars: chosen, comment, t: Date.now() };
+        C.analytics.track('rating', { kind, stars: chosen, comment });
+        C.util.toast('Thanks for the feedback');
+      }
+      wrap.remove(); document.removeEventListener('keydown', onKey);
+      try { await C.store.saveSession(s); } catch { /* the rating is still counted */ }
+      onClose && onClose();
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(false); };
+    document.addEventListener('keydown', onKey);
+    wrap.querySelector('#rt-skip').addEventListener('click', () => close(false));
+    wrap.querySelector('#rt-submit').addEventListener('click', () => { if (chosen) close(true); });
+    stars[0].focus();
+    return () => { wrap.remove(); document.removeEventListener('keydown', onKey); };
+  }
+
   V.summary = async (root, params) => {
     const s = await C.store.getSession(params[0]);
     if (!s) { root.innerHTML = '<section class="container page"><div class="empty"><strong>Session not found</strong>It may have been deleted, or it was saved in a different browser.<p style="margin-top:1rem"><a class="btn btn-primary" href="#/app">Back to dashboard</a></p></div></section>'; return; }
@@ -196,6 +239,7 @@
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">${pres ? 'Presentation summary' : 'Summary'}</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${esc(C.sessionName(s))}</h1>
         <div class="muted">${fmtDateTime(s.createdAt)} · ${fmtDur(m.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}${s.completed ? '' : ' · ended early'}</div>
+        ${s.rating ? `<div class="small"><span class="stars-static" aria-label="You rated this ${s.rating.stars} out of 5">${'★'.repeat(s.rating.stars)}${'☆'.repeat(5 - s.rating.stars)}</span> <span class="muted">Your rating</span></div>` : ''}
         ${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? `<div class="row" style="gap:.4rem">${s.ai.qSource === 'claude' ? '<span class="badge">Questions written by Claude (AI)</span>' : ''}${s.ai.followUps ? `<span class="badge">${s.ai.followUps} AI follow-up${s.ai.followUps > 1 ? 's' : ''}</span>` : ''}</div>` : ''}</div>
         <div class="row"><button class="btn btn-ghost" id="dl-sum">Download summary</button><button class="btn btn-ghost" id="dl-rec" ${s.hasRecording ? '' : 'disabled'}>Download recording</button><button class="btn btn-ghost" id="dl-tr">Download transcript</button></div></div>
       ${!caps.speech || !caps.vision ? `<div class="callout warn" style="margin-bottom:1rem">${[!caps.speech ? 'Speech measures need speech recognition, which this browser did not provide. Chrome or Edge work best.' : '', caps.camera && !caps.vision ? 'Face and posture analysis could not load.' : '', !caps.camera ? 'No camera was used, so face and posture were not measured.' : ''].filter(Boolean).join(' ')}</div>` : ''}
@@ -221,7 +265,9 @@
     $('#retry').addEventListener('click', () => { $('#retry-opts').hidden = false; });
     $('#retry-same').addEventListener('click', () => { C.pending = { ...s.setup }; location.hash = pres ? '#/app/present' : '#/app/interview'; });
     $('#retry-change').addEventListener('click', () => { C.store.setLastSetup(pres ? { agent: 'present', title: s.setup.title } : { source: s.setup.source, mode: s.setup.mode, jobName: s.setup.jobName, jd: s.setup.jd, custom: s.setup.custom, withOpener: s.setup.withOpener }); location.hash = '#/app/setup'; });
-    return { destroy() { if (recUrl) URL.revokeObjectURL(recUrl); } };
+    let closeRating = null, rtTimer = null;
+    if (s.completed && !s.ratingAsked) rtTimer = setTimeout(() => { if (root.isConnected) closeRating = ratingModal(s, C.sessionKind(s), () => { closeRating = null; const h = root.querySelector('.page-head .muted'); if (s.rating && h && root.isConnected) h.insertAdjacentHTML('afterend', `<div class="small"><span class="stars-static" aria-label="You rated this ${s.rating.stars} out of 5">${'★'.repeat(s.rating.stars)}${'☆'.repeat(5 - s.rating.stars)}</span> <span class="muted">Your rating</span></div>`); }); }, 700);
+    return { destroy() { clearTimeout(rtTimer); if (closeRating) closeRating(); if (recUrl) URL.revokeObjectURL(recUrl); } };
   };
 
   // ---------------- Settings ----------------

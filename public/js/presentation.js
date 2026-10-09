@@ -62,7 +62,7 @@
     // ---------------- the room: only you ----------------
     const elapsed = () => (performance.now() - S.t0 - S.pausedMs - (S.paused ? performance.now() - S.pauseStart : 0)) / 1000;
     function enterRoom() {
-      S.started = true;
+      S.started = true; C.analytics.track('presentation_start');
       root.innerHTML = `<section class="container page"><div class="room">
         <div class="room-top"><div class="row"><span class="badge">${esc(setup.title)}</span><span class="badge">Presentation</span></div>
           <div class="row"><span class="small" id="timer">0:00</span><span class="rec" id="rec" ${window.MediaRecorder ? '' : 'hidden'}>REC</span></div></div>
@@ -139,6 +139,7 @@
       const id = uid();
       const session = { id, createdAt: Date.now(), completed: complete, setup: { kind: 'presentation', title: setup.title }, metrics, scores, actions, hasRecording: !!blob, ai: { qSource: 'none', followUps: 0 } };
       try { await C.store.saveSession(session); if (blob) await C.store.saveRecording(id, blob); } catch { /* summary still opens from memory */ }
+      if (complete) C.analytics.track('presentation_complete');
       C.pending = null;
       location.hash = `#/app/summary/${id}`;
     }

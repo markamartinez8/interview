@@ -81,7 +81,7 @@
 
     // ---------------- live room ----------------
     function enterRoom() {
-      S.started = true;
+      S.started = true; C.analytics.track('interview_start');
       const fu = $('#ai-fu'); S.useFollowups = !!(fu && fu.checked && setup.source === 'ai');
       const practice = setup.mode === 'practice';
       every(() => {}, 1000);
@@ -301,6 +301,7 @@
       const id = uid();
       const session = { id, createdAt: Date.now(), completed: complete, setup: { ...setup }, metrics, scores, actions, hasRecording: !!blob, ai: { qSource: setup.qSource || 'templates', followUps: S.followUps } };
       try { await C.store.saveSession(session); if (blob) await C.store.saveRecording(id, blob); } catch { /* summary still opens from memory */ }
+      if (complete) C.analytics.track('interview_complete');
       if (setup.roleId && setup.applicantId) C.store.updateApplicant(setup.roleId, setup.applicantId, complete ? { completed: true, sessionId: id, completedAt: Date.now() } : { sessionId: id });
       C.pending = null; void run;
       location.hash = `#/app/summary/${id}`;

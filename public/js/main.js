@@ -6,6 +6,9 @@
 
   function header(route, minimal) {
     const inApp = route.startsWith('/app');
+    if (route === '/admin') {
+      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Admin</span></a><nav class="nav" aria-label="Admin"><a href="#/">Back to Caddie</a></nav></div></header>`;
+    }
     if (route.startsWith('/recruiter')) {
       return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Recruiter</span></a><nav class="nav" aria-label="Recruiter"><a href="#/recruiter" ${route === '/recruiter' ? 'aria-current="page"' : ''}>Roles</a><a href="#/recruiter/settings" ${route === '/recruiter/settings' ? 'aria-current="page"' : ''}>Profile and Settings</a><a class="btn btn-primary btn-sm" href="#/recruiter/new">Create new role</a></nav></div></header>`;
     }
@@ -17,7 +20,7 @@
     return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
   }
   // The recruiter link appears only on the main homepage.
-  const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Caddie · Interview practice</span><span class="small">Sessions are stored in your browser. Optional AI features send text, never video or audio, to Anthropic&rsquo;s Claude.</span></div>${route === '/' ? '<a class="foot-link" href="#/recruiter">Recruiter login</a>' : ''}</div></footer>`;
+  const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Caddie · Interview practice</span><span class="small">Sessions are stored in your browser. Caddie counts anonymous visits and any rating you choose to leave, and never collects your video, audio or answers. Optional AI features send text to Anthropic&rsquo;s Claude.</span></div>${route === '/' ? '<div class="foot-links"><a class="foot-link" href="#/recruiter">Recruiter login</a><a class="foot-link" href="#/admin">Admin</a></div>' : ''}</div></footer>`;
 
   async function route() {
     const hash = location.hash.replace(/^#/, '') || '/';
@@ -25,7 +28,7 @@
     if (current && current.destroy) { try { current.destroy(); } catch { /* ignore */ } }
     current = null;
     const publicPages = { '/': 'home', '/value': 'value', '/about': 'about', '/plans': 'plans' };
-    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings', '/recruiter': 'recruiter', '/recruiter/new': 'recruiterEdit', '/recruiter/settings': 'recruiterSettings', '/recruiter/edit': 'recruiterEdit' };
+    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings', '/admin': 'admin', '/recruiter': 'recruiter', '/recruiter/new': 'recruiterEdit', '/recruiter/settings': 'recruiterSettings', '/recruiter/edit': 'recruiterEdit' };
     let key = path;
     let params = rest;
     if (path === '/app/summary') { key = '/app/summary'; params = rest; }
@@ -36,6 +39,7 @@
     window.scrollTo(0, 0);
     if (publicPages[key]) {
       view.innerHTML = C.views[publicPages[key]]();
+      if (key === '/') { let seen = false; try { seen = sessionStorage.getItem('caddie.hv') === '1'; sessionStorage.setItem('caddie.hv', '1'); } catch { /* blocked */ } if (!seen) C.analytics.track('home_view'); }
       const hero = view.querySelector('#hero-avatar');
       if (hero) { const av = new C.Avatar(hero); av.setListening(true); current = { destroy: () => av.destroy() }; }
       return;
