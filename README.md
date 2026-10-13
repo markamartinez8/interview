@@ -60,3 +60,14 @@ The admin page shows anonymous counts (people who visited the homepage, started 
 - On a plain static host (the `dist` demo), there is no server, so the admin page shows only activity from the browser you are using.
 
 Only an anonymous visitor id, the event type, and the rating and comment are collected. Never video, audio, transcripts or answers.
+
+## Hosting the server for other people
+
+Run `npm start` on a host that runs Node. Set these environment variables:
+
+- `CADDIE_PUBLIC=1` turns on public mode: visitors' anonymous analytics are accepted and the server listens on all addresses. (AI endpoints stay local-only.)
+- `CADDIE_ADMIN_PASSWORD` (and optionally `CADDIE_ADMIN_USER`) replaces the default admin login. Always set it on a public host.
+- `CADDIE_DATA_DIR` points at a folder that survives restarts (for example a mounted disk). Analytics are stored there in `events.jsonl`.
+- `PORT` is usually provided by the host.
+
+Build command: `npm install`. Start command: `npm start`. Camera access needs https, which hosting platforms provide.

@@ -32,7 +32,7 @@ function readJson(req, limit = 200000) {
 function send(res, code, obj) { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); }
 // ---- Analytics and admin. Events are anonymous (visitor id, event type, rating and comment) and kept in data/events.jsonl.
 // Local only by default; set CADDIE_PUBLIC=1 when hosting the server for other people (the AI endpoints stay local-only).
-const DATA_DIR = path.join(__dirname, 'data'), EVENTS = path.join(DATA_DIR, 'events.jsonl');
+const DATA_DIR = process.env.CADDIE_DATA_DIR || path.join(__dirname, 'data'), EVENTS = path.join(DATA_DIR, 'events.jsonl');
 const ADMIN_USER = process.env.CADDIE_ADMIN_USER || 'caddie', ADMIN_PASS = process.env.CADDIE_ADMIN_PASSWORD || 'test';
 const sha = (v) => crypto.createHash('sha256').update(String(v)).digest();
 const tokens = new Map(), attempts = new Map();
@@ -59,7 +59,9 @@ async function handleAnalytics(req, res, urlPath) {
       return send(res, 200, { ok: true });
     }
     if (urlPath === '/api/admin/login' && req.method === 'POST') {
-      const ip = req.socket.remoteAddress || '?', now = Date.now(), a = attempts.get(ip) || { n: 0, reset: now + 60000 };
+      // Behind a hosting proxy every request arrives from the proxy, so use the forwarded address for the attempt limit.
+      const fwd = process.env.CADDIE_PUBLIC === '1' && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+      const ip = fwd || req.socket.remoteAddress || '?', now = Date.now(), a = attempts.get(ip) || { n: 0, reset: now + 60000 };
       if (now > a.reset) { a.n = 0; a.reset = now + 60000; }
       if (++a.n > 8) { attempts.set(ip, a); return send(res, 429, { error: 'Too many attempts. Try again in a minute.' }); }
       attempts.set(ip, a);
@@ -126,5 +128,5 @@ const server = http.createServer((req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-const host = process.env.HOST || '127.0.0.1'; // this computer only, unless you choose otherwise
+const host = process.env.HOST || (process.env.CADDIE_PUBLIC === '1' ? '0.0.0.0' : '127.0.0.1'); // this computer only, unless hosted for others
 server.listen(port, host, () => console.log(`Caddie is running at http://localhost:${port}`));
