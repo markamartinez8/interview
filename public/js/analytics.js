@@ -4,7 +4,7 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.Caddie = root.Caddie || { views: {} }; root.Caddie.analytics = api; }
 })(typeof window !== 'undefined' ? window : globalThis, function () {
-  const TYPES = ['home_view', 'interview_start', 'interview_complete', 'presentation_start', 'presentation_complete', 'rating'];
+  const TYPES = ['visit', 'home_view', 'interview_start', 'interview_complete', 'presentation_start', 'presentation_complete', 'rating'];
 
   // Counts people (anonymous visitor ids), not page loads. "Started" means the live interview or presentation began;
   // "completed" means an interview ran through all its questions, or a presentation was ended by the presenter.
@@ -22,7 +22,10 @@
       return { startedUsers: started.size, startedCount: count(`${name}_start`), completedUsers: completed.size, completedCount: count(`${name}_complete`),
         completionRate: started.size ? Math.round((completed.size / started.size) * 100) : null, rating: ratings(name) };
     };
-    return { homepageUsers: users('home_view').size, homepageVisits: count('home_view'), interview: flow('interview'), presentation: flow('presentation') };
+    // Website-wide: a user is one anonymous person who did anything on the site; a visit is one browsing session (tab) arriving at the site.
+    // Older data has no 'visit' events, so visits never count fewer than homepage visits.
+    const everyone = new Set(events.map((e) => e.vid));
+    return { siteUsers: everyone.size, siteVisits: Math.max(count('visit'), count('home_view')), homepageUsers: users('home_view').size, homepageVisits: count('home_view'), interview: flow('interview'), presentation: flow('presentation') };
   }
 
   const api = { TYPES, aggregate };

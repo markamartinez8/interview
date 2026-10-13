@@ -368,3 +368,4 @@ table.logs th { color: var(--text-muted); font-size: .78rem; text-transform: upp
 .comments li { padding: .6rem 0; border-top: 1px solid var(--border-default); }
 .comments li:first-child { border-top: 0; }
 .foot-links { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; }
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }

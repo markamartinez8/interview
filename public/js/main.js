@@ -22,7 +22,15 @@
   // The recruiter link appears only on the main homepage.
   const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Caddie · Interview practice</span><span class="small">Sessions are stored in your browser. Caddie counts anonymous visits and any rating you choose to leave, and never collects your video, audio or answers. Optional AI features send text to Anthropic&rsquo;s Claude.</span></div>${route === '/' ? '<div class="foot-links"><a class="foot-link" href="#/recruiter">Recruiter login</a><a class="foot-link" href="#/admin">Admin</a></div>' : ''}</div></footer>`;
 
+  // One visit per browsing session, whichever page the person lands on.
+  function trackVisit() {
+    let seen = false;
+    try { seen = sessionStorage.getItem('caddie.visit') === '1'; sessionStorage.setItem('caddie.visit', '1'); } catch { /* blocked */ }
+    if (!seen) C.analytics.track('visit');
+  }
+
   async function route() {
+    trackVisit();
     const hash = location.hash.replace(/^#/, '') || '/';
     const [path, ...rest] = hash.split('/').filter(Boolean).length ? ['/' + hash.split('/').filter(Boolean).slice(0, 2).join('/'), ...hash.split('/').filter(Boolean).slice(2)] : ['/'];
     if (current && current.destroy) { try { current.destroy(); } catch { /* ignore */ } }

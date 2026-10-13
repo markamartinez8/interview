@@ -68,9 +68,9 @@
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Admin</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Web analytics</h1></div><button class="btn btn-ghost" id="ad-out">Sign out</button></div>
       <div class="callout ${res.source === 'server' ? '' : 'warn'}" style="margin-bottom:1rem">${res.source === 'server' ? 'Showing activity from every visitor, collected by the Caddie server. Counts are anonymous people, not page loads.' : 'Showing activity from this browser only. This site has no Caddie server collecting visits, so other visitors are not counted. Counts are anonymous people, not page loads.'}</div>
-      ${stat('Users accessing the homepage', s.homepageUsers, s.homepageVisits !== s.homepageUsers ? `${s.homepageVisits} visits in total` : '')}
+      <div class="stat-row">${stat('Users', s.siteUsers, 'Unique people who used the website')}${stat('Visits', s.siteVisits, 'Total visits to the website')}${stat('Users accessing the homepage', s.homepageUsers, s.homepageVisits !== s.homepageUsers ? `${s.homepageVisits} homepage visits in total` : 'Unique people')}</div>
       <div class="dash-cols" style="margin-top:1rem">${flowHTML('Interviews', s.interview)}${flowHTML('Presentations', s.presentation)}</div>
-      <p class="small muted" style="margin-top:1rem">Started means the live interview or presentation began. Completed means an interview ran through every question, or a presentation was ended by the presenter.</p></section>`;
+      <p class="small muted" style="margin-top:1rem">Users are unique anonymous people (one per browser). Visits are total visits: each time someone arrives at the site in a new browser tab or window counts once, however many pages they open. Started means the live interview or presentation began. Completed means an interview ran through every question, or a presentation was ended by the presenter.</p></section>`;
     root.querySelector('#ad-out').addEventListener('click', () => { setToken(null); V.admin(root); });
   };
 })(window.Caddie);
