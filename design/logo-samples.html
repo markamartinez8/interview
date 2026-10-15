@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Greenroom: logo</title>
+<title>The Greenroom: dotted-length options</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,750&family=Hanken+Grotesk:wght@400;600&display=swap">
 <style>
 :root{--primary:#3730A3;--primary-bright:#5B5BD6;--ink:#14171F;--slate:#4A5261;--mist:#E6E8EC;--cloud:#F7F8FA;--room:#10131C}
@@ -15,26 +15,28 @@ h1{margin:0 0 .3rem;font-size:2.2rem}h2{margin:2.2rem 0 .3rem;font-size:1.4rem}.
 .sizes{align-items:flex-end;gap:1.4rem}.sizes svg{width:auto}.tile{background:var(--primary);border-radius:22%;display:flex;align-items:center;justify-content:center}
 .tile.sq svg{width:64%;height:64%}
 </style></head><body>
-<h1>The Greenroom: logo</h1>
-<p class="lede">Direction C, refined. The top of the G is a dotted indigo line, the rest of the curve is solid indigo, and the closing bar is green.</p>
-<div class="grid" id="main"></div>
-<h2>Small sizes and app icon</h2>
-<div class="grid" id="small"></div>
-<p class="note">Colors: indigo #3730A3 (#5B5BD6 on dark), green #1E8E5A (#2FBF7A on dark). Both come from the app palette. The earlier "on-air" dot was removed because the green bar now carries that accent.</p>
+<h1>The Greenroom: dotted-length options</h1>
+<p class="lede">Same mark, three lengths of dotted line. The solid curve and the green bar are unchanged. Compare them side by side, at full size and small.</p>
+<div id="root"></div>
+<p class="note">Colors: indigo #3730A3 (#5B5BD6 on dark), green #1E8E5A (#2FBF7A on dark). Both come from the app palette.</p>
 <script>
-// Geometry: circle centre (32.35, 30.46), radius 18. Dotted arc covers the top (from 36 degrees above the right to 30 degrees past the top on the left).
-const mark = (p, g, bg) => `${bg || ''}<path d="M47 20A18 18 0 0 0 16.76 21.46" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.01 11.93"/>
-<path d="M16.76 21.46A18 18 0 1 0 50 34" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round"/>
+// Circle centre (32.35, 30.46), radius 18. The dotted arc starts at the upper right and runs counterclockwise to the stop point.
+const VERS = [
+  { name: 'Current: dots to about 10 o\'clock', note: 'Dots cover the top only. Fewest dots, calmest look.', dot: 'M47 20A18 18 0 0 0 16.76 21.46', gap: 11.93, solid: 'M16.76 21.46A18 18 0 1 0 50 34' },
+  { name: '1. Dots to 9 o\'clock', note: 'Dots run across from the green bar, down the left edge.', dot: 'M47 20A18 18 0 0 0 14.35 30.46', gap: 11.3, solid: 'M14.35 30.46A18 18 0 0 0 50 34' },
+  { name: '2. Dots to 6 o\'clock', note: 'Dots wrap the whole top and left, ending at the bottom of the G.', dot: 'M47 20A18 18 0 1 0 32.35 48.46', gap: 12.25, solid: 'M32.35 48.46A18 18 0 0 0 50 34' }
+];
+const mark = (v, p, g) => `<path d="${v.dot}" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.01 ${v.gap}"/>
+<path d="${v.solid}" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round"/>
 <path d="M50 34H35" fill="none" stroke="${g}" stroke-width="8" stroke-linecap="round"/>`;
 const L = ['#3730A3', '#1E8E5A'], D = ['#5B5BD6', '#2FBF7A'], W = ['#fff', '#2FBF7A'];
 const svg = (inner, style = '') => `<svg viewBox="0 0 64 64" aria-hidden="true" style="${style}">${inner}</svg>`;
 const word = '<span class="word"><i>The</i>Greenroom</span>';
-document.getElementById('main').innerHTML = `
- <div class="card"><h3>Horizontal, light</h3><p>Primary lockup for the app header and website.</p><div class="pane">${svg(mark(...L))}${word}</div></div>
- <div class="card"><h3>Horizontal, dark</h3><p>For the interview room and dark surfaces.</p><div class="pane dark">${svg(mark(...D))}${word}</div></div>
- <div class="card"><h3>Stacked</h3><p>For square spaces, social and splash screens.</p><div class="pane stack">${svg(mark(...L))}${word}</div></div>`;
-const tile = (s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(mark(...W), 'width:68%;height:68%')}</div>`;
-document.getElementById('small').innerHTML = `
- <div class="card"><h3>Mark at 64, 40, 24 and 16 px</h3><p>The dots stay readable down to about 24px. Below that, use the app icon version.</p><div class="pane sizes">${svg(mark(...L), 'width:64px;height:64px')}${svg(mark(...L), 'width:40px;height:40px')}${svg(mark(...L), 'width:24px;height:24px')}${svg(mark(...L), 'width:16px;height:16px')}</div></div>
- <div class="card"><h3>App icon / favicon</h3><p>Indigo tile with a white G and green bar.</p><div class="pane sizes">${tile(96)}${tile(48)}${tile(32)}${tile(16)}</div></div>`;
-</script></body></html>
+const tile = (v, s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(mark(v, ...W), 'width:68%;height:68%')}</div>`;
+document.getElementById('root').innerHTML = `<div class="grid">${VERS.map((v) => `<div class="card"><h3>${v.name}</h3><p>${v.note}</p>
+  <div class="pane">${svg(mark(v, ...L))}${word}</div>
+  <div class="pane dark">${svg(mark(v, ...D))}${word}</div>
+  <div class="pane" style="gap:1.4rem;align-items:flex-end">${svg(mark(v, ...L), 'width:64px;height:64px')}${svg(mark(v, ...L), 'width:40px;height:40px')}${svg(mark(v, ...L), 'width:24px;height:24px')}${svg(mark(v, ...L), 'width:16px;height:16px')}</div>
+  <div class="pane" style="gap:1.2rem;align-items:flex-end">${tile(v, 72)}${tile(v, 48)}${tile(v, 32)}${tile(v, 16)}</div></div>`).join('')}</div>`;
+</script>
+</body></html>
