@@ -96,7 +96,7 @@
     };
   };
 
-  // Answer text in order, including any AI follow-ups Caddie asked.
+  // Answer text in order, including any AI follow-ups the interviewer asked.
   C.qaParts = function (q) {
     const parts = [];
     if (q.segments && q.segments.length) {
@@ -120,14 +120,14 @@
   C.transcriptText = function (s) {
     if (C.sessionKind(s) === 'presentation') {
       const q = s.metrics.perQuestion[0] || {};
-      return [`Caddie presentation transcript`, `Presentation: ${C.sessionName(s)}`, `Date: ${fmtDate(s.createdAt)}`, `Length: ${fmtDur(s.metrics.duration)}`, '', q.answer || '(no transcript captured)', ''].join('\n');
+      return [`Greenroom presentation transcript`, `Presentation: ${C.sessionName(s)}`, `Date: ${fmtDate(s.createdAt)}`, `Length: ${fmtDur(s.metrics.duration)}`, '', q.answer || '(no transcript captured)', ''].join('\n');
     }
-    const lines = [`Caddie interview transcript`, `Role: ${s.setup.jobName || 'Custom questions'}`, `Date: ${fmtDate(s.createdAt)}`, `Mode: ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`, ''];
+    const lines = [`Greenroom interview transcript`, `Role: ${s.setup.jobName || 'Custom questions'}`, `Date: ${fmtDate(s.createdAt)}`, `Mode: ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`, ''];
     s.metrics.perQuestion.forEach((q, i) => {
-      lines.push(`Q${i + 1} Caddie: ${q.text}`);
+      lines.push(`Q${i + 1} Interviewer: ${q.text}`);
       if (q.asked) {
         const parts = C.qaParts(q);
-        parts.forEach((p) => lines.push(p.who === 'caddie' ? `Caddie (AI follow-up): ${p.text}` : `You${p.typed ? ' (typed)' : ''}: ${p.text}`));
+        parts.forEach((p) => lines.push(p.who === 'caddie' ? `Interviewer (AI follow-up): ${p.text}` : `You${p.typed ? ' (typed)' : ''}: ${p.text}`));
         if (!parts.length) lines.push('You: (no transcript captured)');
       } else lines.push('(not asked)');
       lines.push('');
@@ -139,13 +139,13 @@
     const pres = C.sessionKind(s) === 'presentation';
     const d = C.describe(s.metrics), L = (x) => label(x).text;
     const block = (title, rows) => `<h3>${esc(title)}</h3><table>${rows.map((r) => `<tr><td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td><td>${esc(r[2] || '')}</td></tr>`).join('')}</table>`;
-    return `<!doctype html><html lang="en"><meta charset="utf-8"><title>Caddie summary</title>
+    return `<!doctype html><html lang="en"><meta charset="utf-8"><title>Greenroom summary</title>
 <style>body{font:16px/1.5 system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#14171F}h1{color:#3730A3}h3{margin-top:1.6rem}table{border-collapse:collapse;width:100%}td{padding:.35rem .5rem;border-top:1px solid #E6E8EC}blockquote{margin:.3rem 0 1rem;padding:.4rem .8rem;border-left:3px solid #2A9DA8;background:#F7F8FA;color:#4A5261}.s{display:inline-block;margin-right:1.2rem}</style>
-<h1>Caddie ${pres ? 'presentation' : 'interview'} summary</h1><p>${esc(C.sessionName(s))} · ${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}</p>
+<h1>Greenroom ${pres ? 'presentation' : 'interview'} summary</h1><p>${esc(C.sessionName(s))} · ${fmtDate(s.createdAt)} · ${fmtDur(s.metrics.duration)}${pres ? '' : ` · ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'} mode`}</p>
 <p>${(pres ? ['speech', 'face', 'body'] : ['speech', 'face', 'body', 'qa']).map((k) => `<span class="s"><b>${{ speech: 'Speech', face: 'Face', body: 'Body language', qa: 'Answers' }[k]}</b>: ${s.scores[k] == null ? 'not measured' : `${s.scores[k]} (${L(s.scores[k])})`}</span>`).join('')}</p>
 <h3>Action items</h3><ol>${s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('')}</ol>
 ${block('Speech', d.speech)}${block('Face', d.face)}${block('Body language', d.body)}
-${pres ? `<h3>Transcript</h3><blockquote>${esc((s.metrics.perQuestion[0] || {}).answer || 'No transcript captured.')}</blockquote>` : `<h3>Questions and answers</h3>${s.metrics.perQuestion.map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q.text)}</p>${C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<i>Caddie (AI follow-up):</i> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${q.asked ? 'No transcript captured.' : 'Not asked.'}</blockquote>`}`).join('')}`}
+${pres ? `<h3>Transcript</h3><blockquote>${esc((s.metrics.perQuestion[0] || {}).answer || 'No transcript captured.')}</blockquote>` : `<h3>Questions and answers</h3>${s.metrics.perQuestion.map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q.text)}</p>${C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<i>Greenroom (AI follow-up):</i> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${q.asked ? 'No transcript captured.' : 'Not asked.'}</blockquote>`}`).join('')}`}
 <p style="color:#4A5261;font-size:.85rem">Measurements are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.${s.ai && (s.ai.qSource === 'claude' || s.ai.followUps) ? ' Some questions were written by AI (Anthropic\'s Claude).' : ''}</p></html>`;
   };
 

@@ -1,4 +1,4 @@
-// Style guide: the in-app reference for Caddie's look, wording and components (#/styleguide).
+// Style guide: the in-app reference for Greenroom's look, wording and components (#/styleguide).
 // Colors, fonts, radii and shadows are read live from the CSS, so the page cannot drift from the code.
 // To update: change the token in css/colors.css or css/app.css (the swatches follow), then edit the notes in the data below.
 (function (C) {
@@ -46,10 +46,10 @@
   ];
 
   const TERMS = [
-    ['Caddie', 'The product and the AI interviewer. One name, one voice. Never "Andy".', 'Caddie asks follow-up questions.'],
+    ['Greenroom', 'The product name. One word, no "The". The interviewer inside it is unnamed: say "the interviewer" or "your AI interviewer".', 'Never "Caddie" or "Andy".'],
     ['Begin session', 'Starts a new interview or presentation from the header or dashboard.', 'Not "Begin interview" or "Start new interview".'],
-    ['Go to green room', 'Moves from setup to the camera and microphone check.', 'The green room is the pre-session check.'],
-    ['Join', 'Leaves the green room and starts the 3-second countdown.', ''],
+    ['Check camera and mic', 'Moves from setup to the camera and microphone check. The page eyebrow reads "Before you start".', ''],
+    ['Join', 'Leaves the camera and mic check and starts the 3-second countdown.', ''],
     ['Interview / Practice Presenting', 'The two session types. Presenting is solo, so only you are in the room.', ''],
     ['Practice / Mock', 'Practice shows live cues. Mock hides them until the end.', ''],
     ['Dashboard', 'The practice home, titled "<First name>\'s Dashboard".', ''],
@@ -61,7 +61,7 @@
 
   const RULES = [
     'Sentences are short and plain. Say what will happen before it happens.',
-    'Speak as Caddie only inside the interview. Elsewhere the app speaks as "we" sparingly, or not at all.',
+    'The interviewer speaks in first person only inside the session. Elsewhere the app says "Greenroom" or "we" sparingly.',
     'Sentence case for buttons, headings and labels. No exclamation marks.',
     'Never claim more than the app does: sessions stay in the browser, video and audio are never uploaded, and AI features are opt-in and disclosed.',
     'Scores come with a reason or a tip, never a number alone.',
@@ -101,10 +101,10 @@
       <div class="card flat"><h3>Honest</h3><p class="muted">Plain language, visible privacy notes, and clear labels when AI is involved.</p></div></div>`;
 
     const logo = `<div class="sg-cols">
-      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Caddie</a></div><h3>Primary</h3><p class="muted small">Mark plus wordmark in Bricolage Grotesque 750. Links to the homepage.</p></div>
-      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Caddie <span class="badge" style="font-size:.7rem">Admin</span></a></div><h3>With area badge</h3><p class="muted small">Used for Admin and Recruiter. Badge turns red in the recruiter theme.</p></div>
-      <div class="card flat"><div class="sg-logo-demo" style="background:var(--room);border-radius:var(--radius)"><a class="logo" href="#/styleguide" style="color:#fff">${C.LOGO}Caddie</a></div><h3>On dark</h3><p class="muted small">Wordmark switches to white. Keep clear space equal to the mark's width.</p></div></div>
-      <p class="small muted">Source: <code>C.LOGO</code> in <code>js/main.js</code>. Indigo disc (--color-primary), white play shape, petrol dot (--color-secondary-bright). Do not recolor, stretch or add effects.</p>`;
+      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Greenroom</a></div><h3>Primary</h3><p class="muted small">The G mark plus the wordmark "Greenroom" in Bricolage Grotesque 750, one word with no "The". Links to the homepage.</p></div>
+      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Greenroom <span class="badge" style="font-size:.7rem">Admin</span></a></div><h3>With area badge</h3><p class="muted small">Used for Admin and Recruiter. Badge turns red in the recruiter theme.</p></div>
+      <div class="card flat"><div class="sg-logo-demo" style="background:var(--room);border-radius:var(--radius)"><a class="logo" href="#/styleguide" style="color:#fff">${C.logoMark('#5B5BD6', '#2FBF7A')}Greenroom</a></div><h3>On dark</h3><p class="muted small">Wordmark switches to white and the mark to the lighter indigo and green. Keep clear space equal to the mark's width.</p></div></div>
+      <p class="small muted">Source: <code>C.logoMark()</code> in <code>js/main.js</code>; the favicon and app icon are <code>public/favicon.svg</code>. A G whose top is a dotted line, a solid curve, and a green closing bar: the dots are the practice run, the bar is the way in. The curve uses --color-primary (so it turns red in the recruiter theme) and the bar uses --color-success. On dark, use #5B5BD6 and #2FBF7A. The dots stay readable down to about 24px; below that, use the favicon tile. Do not stretch, outline or add effects. Concept sheet: <code>design/logo-samples.html</code>.</p>`;
 
     const colors = COLORS.map(([g, list]) => `<h3 class="sg-sub">${g}</h3><div class="sg-swatches">${list.map(([n, note]) => swatchRow(n, note)).join('')}</div>`).join('')
       + `<h3 class="sg-sub">Semantic aliases</h3><p class="small muted">Prefer these in components so themes (like the recruiter theme) apply automatically.</p><div class="sg-swatches">${SEMANTIC.map(([n, note]) => swatchRow(n, note)).join('')}</div>
@@ -152,10 +152,11 @@
       <li>Record notable decisions in the log below, newest first.</li>
       <li>Keep one source of truth: if a value is written in two places, move it into a token.</li></ol>
       <h3 class="sg-sub">Change log</h3><ul class="sg-list">
+        <li><b>Renamed to Greenroom.</b> New G mark with dotted top and green bar, replacing the Caddie logo. The interviewer is now unnamed, and the pre-session step is "Check camera and mic".</li>
         <li><b>First version.</b> Palette (indigo, petrol, deep red), recruiter theme, Bricolage Grotesque and Hanken Grotesk, core components, terminology and accessibility rules.</li></ul>`;
 
     view.innerHTML = `<section class="container page sg">
-      <div class="page-head"><div><span class="eyebrow">Caddie</span><h1>Style guide</h1><p class="muted" style="margin-top:.6rem;max-width:60ch">The reference for how Caddie looks, reads and behaves. Colors and type are read live from the stylesheets, so this page always matches the app.</p></div></div>
+      <div class="page-head"><div><span class="eyebrow">Greenroom</span><h1>Style guide</h1><p class="muted" style="margin-top:.6rem;max-width:60ch">The reference for how Greenroom looks, reads and behaves. Colors and type are read live from the stylesheets, so this page always matches the app.</p></div></div>
       <nav class="sg-toc" aria-label="Sections">${toc.map(([id, t]) => `<a href="#/styleguide" data-jump="sg-${id}">${t}</a>`).join('')}</nav>
       ${section('principles', 'Principles', principles)}
       ${section('logo', 'Logo', logo)}

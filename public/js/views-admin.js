@@ -7,7 +7,7 @@
   const setToken = (t) => { try { if (t) sessionStorage.setItem(KEY, t); else sessionStorage.removeItem(KEY); } catch { /* blocked */ } };
   const starText = (n) => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
 
-  // Uses the Caddie server when there is one. On a plain static host there is no server, so it falls back to a check in the browser
+  // Uses the Greenroom server when there is one. On a plain static host there is no server, so it falls back to a check in the browser
   // (lightweight by design: the demo credentials are in the page source).
   async function signIn(username, password) {
     try {
@@ -34,7 +34,7 @@
       <form class="stack" id="ad-form"><div class="field"><label for="ad-user">Username</label><input type="text" id="ad-user" autocomplete="username" autocapitalize="off"></div>
         <div class="field"><label for="ad-pass">Password</label><input type="password" id="ad-pass" autocomplete="current-password"></div>
         <div class="error-text" id="ad-err" role="alert">${esc(message || '')}</div>
-        <div class="row" style="justify-content:space-between"><a class="btn btn-ghost" href="#/">Back to Caddie</a><button class="btn btn-primary" type="submit">Sign in</button></div></form></div></section>`;
+        <div class="row" style="justify-content:space-between"><a class="btn btn-ghost" href="#/">Back to Greenroom</a><button class="btn btn-primary" type="submit">Sign in</button></div></form></div></section>`;
     root.querySelector('#ad-user').focus();
     root.querySelector('#ad-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -67,7 +67,7 @@
     const s = res.stats;
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Admin</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Web analytics</h1></div><button class="btn btn-ghost" id="ad-out">Sign out</button></div>
-      <div class="callout ${res.source === 'server' ? '' : 'warn'}" style="margin-bottom:1rem">${res.source === 'server' ? 'Showing activity from every visitor, collected by the Caddie server. Counts are anonymous people, not page loads.' : 'Showing activity from this browser only. This site has no Caddie server collecting visits, so other visitors are not counted. Counts are anonymous people, not page loads.'}</div>
+      <div class="callout ${res.source === 'server' ? '' : 'warn'}" style="margin-bottom:1rem">${res.source === 'server' ? 'Showing activity from every visitor, collected by the Greenroom server. Counts are anonymous people, not page loads.' : 'Showing activity from this browser only. This site has no Greenroom server collecting visits, so other visitors are not counted. Counts are anonymous people, not page loads.'}</div>
       <div class="stat-row">${stat('Users', s.siteUsers, 'Unique people who used the website')}${stat('Visits', s.siteVisits, 'Total visits to the website')}${stat('Users accessing the homepage', s.homepageUsers, s.homepageVisits !== s.homepageUsers ? `${s.homepageVisits} homepage visits in total` : 'Unique people')}</div>
       <div class="dash-cols" style="margin-top:1rem">${flowHTML('Interviews', s.interview)}${flowHTML('Presentations', s.presentation)}</div>
       <p class="small muted" style="margin-top:1rem">Users are unique anonymous people (one per browser). Visits are total visits: each time someone arrives at the site in a new browser tab or window counts once, however many pages they open. Started means the live interview or presentation began. Completed means an interview ran through every question, or a presentation was ended by the presenter.</p></section>`;

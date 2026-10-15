@@ -1,4 +1,4 @@
-/* Caddie: palette tokens come from colors.css. Layout idea: a calm, course-like canvas (cloud) with indigo as the guide and petrol for data. */
+/* Greenroom: palette tokens come from colors.css. Layout idea: a calm, course-like canvas (cloud) with indigo as the guide and petrol for data. */
 :root {
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -47,7 +47,7 @@ button { cursor: pointer; }
 .site-header { background: var(--bg-surface); border-bottom: 1px solid var(--border-default); position: sticky; top: 0; z-index: 20; }
 .site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 64px; flex-wrap: wrap; padding-block: .4rem; }
 .logo { display: inline-flex; align-items: center; gap: .55rem; font-family: var(--font-display); font-weight: 750; font-size: 1.35rem; color: var(--color-ink); text-decoration: none; letter-spacing: -.02em; }
-.logo svg { width: 26px; height: 26px; }
+.logo svg { width: 30px; height: 30px; }
 .nav { display: flex; gap: .25rem; align-items: center; flex-wrap: wrap; }
 .nav a:not(.btn) { color: var(--text-muted); text-decoration: none; font-weight: 600; padding: .45rem .75rem; border-radius: 8px; }
 .nav a:not(.btn):hover { color: var(--text-default); background: var(--color-primary-tint); }
@@ -152,7 +152,7 @@ table.logs th, table.logs td { text-align: left; padding: .6rem .5rem; border-to
 table.logs th { color: var(--text-muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; border-top: 0; }
 .scroll-x { overflow-x: auto; }
 
-/* Green room + interview room */
+/* Camera and mic check + interview room */
 .prep-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1rem; }
 .prep-grid > * { min-width: 0; }
 .preview { position: relative; aspect-ratio: 4 / 3; background: var(--room); border-radius: var(--radius-lg); overflow: hidden; }

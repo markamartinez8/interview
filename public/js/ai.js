@@ -1,4 +1,4 @@
-// Browser side of the optional AI features. All calls go to this computer's Caddie server, never straight to Anthropic.
+// Browser side of the optional AI features. All calls go to this computer's Greenroom server, never straight to Anthropic.
 (function (C) {
   async function post(url, body, ms) {
     const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms);
@@ -23,7 +23,7 @@
   const POLICY = '<a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic privacy policy</a>';
   C.disclosure = {
     questions: `Turning this on sends the job title and job description you entered to Anthropic's Claude so it can write your questions. See the ${POLICY}.`,
-    followups: `Turning this on sends the text of your answers (the transcript) and the job title to Anthropic's Claude so Caddie can ask follow-up questions. Your video and audio are never sent. See the ${POLICY}.`,
-    general: `AI features are optional and off by default. When on, Caddie sends text, never video or audio, to Anthropic's Claude. See the ${POLICY}.`,
+    followups: `Turning this on sends the text of your answers (the transcript) and the job title to Anthropic's Claude so the interviewer can ask follow-up questions. Your video and audio are never sent. See the ${POLICY}.`,
+    general: `AI features are optional and off by default. When on, Greenroom sends text, never video or audio, to Anthropic's Claude. See the ${POLICY}.`,
   };
 })(window.Caddie);

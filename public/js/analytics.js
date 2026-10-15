@@ -38,7 +38,7 @@
     if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); try { localStorage.setItem('caddie.vid', id); } catch { /* blocked */ } }
     return id;
   }
-  // Record in this browser, and send to the Caddie server when there is one (silently ignored on a plain static host).
+  // Record in this browser, and send to the Greenroom server when there is one (silently ignored on a plain static host).
   api.track = function (type, extra) {
     if (!TYPES.includes(type)) return;
     const ev = { t: Date.now(), vid: visitorId(), type, ...(extra || {}) };

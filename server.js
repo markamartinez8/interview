@@ -1,4 +1,4 @@
-// Dependency-free static server for Caddie. Everything runs in the browser; this only serves files.
+// Dependency-free static server for Greenroom. Everything runs in the browser; this only serves files.
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -129,4 +129,4 @@ const server = http.createServer((req, res) => {
 
 const port = process.env.PORT || 3000;
 const host = process.env.HOST || (process.env.CADDIE_PUBLIC === '1' ? '0.0.0.0' : '127.0.0.1'); // this computer only, unless hosted for others
-server.listen(port, host, () => console.log(`Caddie is running at http://localhost:${port}`));
+server.listen(port, host, () => console.log(`Greenroom is running at http://localhost:${port}`));

@@ -7,7 +7,7 @@
   const FILLERS = /\b(um+|uh+|er|erm|ah|you know|basically|literally|kind of|sort of|i mean|actually)\b/gi;
   const DEG = 180 / Math.PI;
 
-  // Vision models load once and are shared by the green room and the interview.
+  // Vision models load once and are shared by the camera check and the interview.
   let visionPromise;
   C.loadVision = function () {
     if (visionPromise) return visionPromise;
@@ -72,7 +72,7 @@
       for (const b of this.buf) { const d = (b - 128) / 128; sum += d * d; }
       this.rms = Math.sqrt(sum / this.buf.length);
       const now = performance.now();
-      if (!this.active) { // green room: learn the room's noise floor
+      if (!this.active) { // camera check: learn the room's noise floor
         this.floorWin = (this.floorWin || []).concat(this.rms).slice(-30);
         this.floor = Math.min(...this.floorWin);
         this.threshold = Math.max(0.015, this.floor * 3);

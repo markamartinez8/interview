@@ -55,7 +55,7 @@
     const qi = C.quick(sessions, 'interview'), qp = C.quick(sessions, 'presentation');
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Welcome back</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">${profile.name.trim() ? `${esc(profile.name.trim().split(/\s+/)[0])}'s Dashboard` : 'Your Dashboard'}</h1></div></div>
-      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Start your first session'}</h2><p>${sessions.length ? 'Practice makes perfect! Begin a new session.' : 'Practice an interview with Caddie, or rehearse a talk and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
+      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Start your first session'}</h2><p>${sessions.length ? 'Practice makes perfect! Begin a new session.' : 'Practice an interview with Greenroom, or rehearse a talk and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
       <div class="dash-cols">
         <div class="stack"><h2 class="col-title">Interviews</h2>${sessionsTile(qi, 'interview')}${quickTile(qi, 'interview')}</div>
         <div class="stack"><h2 class="col-title">Presentations</h2>${sessionsTile(qp, 'presentation')}${quickTile(qp, 'presentation')}</div>
@@ -100,7 +100,7 @@
     }
 
     function panelHTML() {
-      if (!S.jd.trim()) return '<p class="small muted">Paste a job description and Caddie will pick out the responsibilities, requirements and skills to build your questions from. Without one, questions come from the job title.</p>';
+      if (!S.jd.trim()) return '<p class="small muted">Paste a job description and Greenroom will pick out the responsibilities, requirements and skills to build your questions from. Without one, questions come from the job title.</p>';
       const a = C.jd.analyze(S.jd, S.jobName);
       if (a.length < 80) return '<p class="small muted">That is quite short. A full posting gives better questions.</p>';
       const li = (arr) => arr.slice(0, 3).map((x) => `<li>${esc(x.length > 110 ? x.slice(0, 109) + '…' : x)}</li>`).join('');
@@ -108,15 +108,15 @@
         ${a.skills.length ? `<div class="row" style="gap:.35rem"><span class="small muted">Skills:</span>${a.skills.map((k) => `<span class="badge petrol">${esc(k)}</span>`).join('')}</div>` : ''}
         ${a.resp.length ? `<div><b class="small">Responsibilities it found</b><ul class="small muted" style="margin:.2rem 0 0;padding-left:1.1rem">${li(a.resp)}</ul></div>` : ''}
         ${a.req.length ? `<div><b class="small">Requirements it found</b><ul class="small muted" style="margin:.2rem 0 0;padding-left:1.1rem">${li(a.req)}</ul></div>` : ''}
-        ${!a.structured ? '<div class="callout warn small">Caddie could not find clear responsibilities and requirements sections, so it is using the sentences that look most like duties and qualifications. Headings such as "What you\'ll do" and "What we\'re looking for" help.</div>' : ''}`;
+        ${!a.structured ? '<div class="callout warn small">Greenroom could not find clear responsibilities and requirements sections, so it is using the sentences that look most like duties and qualifications. Headings such as "What you\'ll do" and "What we\'re looking for" help.</div>' : ''}`;
     }
 
     function render() {
       if (S.step === 1) {
         const interview = S.agent === 'interview';
         root.innerHTML = frame(`<div class="stack" style="gap:1.4rem">
-          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', S.agent, 'Interview', 'Caddie asks questions and listens while you answer.')}${radio('agent', 'present', S.agent, 'Practice Presenting', 'Caddie listens to your presentation')}</div></div>
-          ${interview ? `<div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Dynamic questions', 'Built from the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'Static questions', 'You enter the exact questions Caddie asks.')}</div></div>
+          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', S.agent, 'Interview', 'The interviewer asks questions and listens while you answer.')}${radio('agent', 'present', S.agent, 'Practice Presenting', 'Greenroom listens to your presentation')}</div></div>
+          ${interview ? `<div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Dynamic questions', 'Built from the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'Static questions', 'You enter the exact questions the interviewer asks.')}</div></div>
           <div class="field"><span class="label">Mode</span><div class="seg">${radio('mode', 'practice', S.mode, 'Practice', 'Live cues on the side. You can pause, skip and go back.')}${radio('mode', 'mock', S.mode, 'Mock', 'Like the real thing. No tips or pausing until the summary.')}</div></div>` : ''}
           <div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-primary" id="next">Next</button></div></div>`);
         root.querySelectorAll('input[name=agent]').forEach((i) => i.addEventListener('change', () => { S.agent = i.value; render(); }));
@@ -125,8 +125,8 @@
         $('#next').addEventListener('click', () => { S.step = 2; render(); });
       } else if (S.step === 2 && S.agent === 'present') {
         root.innerHTML = frame(`<div class="stack">
-          <div class="field"><label for="ptitle">Presentation name <span class="req">*</span></label><input type="text" id="ptitle" value="${esc(S.title)}" placeholder="e.g. Q4 results for the leadership team" maxlength="120"><span class="hint">You will see only yourself in the green room. Caddie listens and gives feedback afterward, but does not join or talk.</span></div>
-          <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary" id="go" ${S.title.trim() ? '' : 'disabled'}>Go to green room</button></div></div>`);
+          <div class="field"><label for="ptitle">Presentation name <span class="req">*</span></label><input type="text" id="ptitle" value="${esc(S.title)}" placeholder="e.g. Q4 results for the leadership team" maxlength="120"><span class="hint">You will see only yourself on screen. Greenroom listens and gives feedback afterward, but does not join or talk.</span></div>
+          <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary" id="go" ${S.title.trim() ? '' : 'disabled'}>Check camera and mic</button></div></div>`);
         const t = $('#ptitle'), go = $('#go');
         t.addEventListener('input', () => { S.title = t.value; go.disabled = !t.value.trim(); });
         t.focus();
@@ -135,16 +135,16 @@
         go.addEventListener('click', start);
         t.addEventListener('keydown', (e) => { if (e.key === 'Enter') start(); });
       } else if (S.step === 2) {
-        const buttons = `<div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><div class="row"><button class="btn btn-ghost" id="preview">Preview questions</button><button class="btn btn-primary" id="go">Go to green room</button></div></div>`;
+        const buttons = `<div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><div class="row"><button class="btn btn-ghost" id="preview">Preview questions</button><button class="btn btn-primary" id="go">Check camera and mic</button></div></div>`;
         root.innerHTML = frame(S.source === 'ai' ? `<div class="stack">
           <div class="field"><label for="job">Job title <span class="req">*</span></label><input type="text" id="job" value="${esc(S.jobName)}" placeholder="e.g. Senior Backend Engineer"></div>
           <div class="field"><label for="jd">Job description (optional)</label><textarea id="jd" style="min-height:190px" placeholder="Paste the whole posting here, including 'What you'll do' and 'What we're looking for'.">${esc(S.jd)}</textarea><span class="hint">Links to job posts cannot be read, so paste the text.</span></div>
-          <div class="callout stack" style="gap:.6rem" id="jd-panel" aria-live="polite"><b>What Caddie picked up</b><div class="stack" style="gap:.5rem" id="jd-body">${panelHTML()}</div></div>
-          ${C.ai.info.available ? `<div class="callout"><label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-q" ${S.aiQ ? 'checked' : ''} style="margin-top:.25rem"><span><b>Use Claude (AI) to write my questions</b> for a deeper read of the posting<br><span class="small">${C.disclosure.questions}</span></span></label></div>` : C.ai.info.offline ? '<div class="callout small">Caddie builds the questions from the job title and description.</div>' : '<div class="callout small">Questions are built by Caddie from the job title and description. For a deeper read by Claude, add an Anthropic key in <a href="#/app/settings">Settings</a>.</div>'}
-          <p class="small muted">Caddie always opens with "Walk me through your resume", then asks the 3 or 4 questions most relevant to the role.</p>
+          <div class="callout stack" style="gap:.6rem" id="jd-panel" aria-live="polite"><b>What Greenroom picked up</b><div class="stack" style="gap:.5rem" id="jd-body">${panelHTML()}</div></div>
+          ${C.ai.info.available ? `<div class="callout"><label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-q" ${S.aiQ ? 'checked' : ''} style="margin-top:.25rem"><span><b>Use Claude (AI) to write my questions</b> for a deeper read of the posting<br><span class="small">${C.disclosure.questions}</span></span></label></div>` : C.ai.info.offline ? '<div class="callout small">Greenroom builds the questions from the job title and description.</div>' : '<div class="callout small">Questions are built by Greenroom from the job title and description. For a deeper read by Claude, add an Anthropic key in <a href="#/app/settings">Settings</a>.</div>'}
+          <p class="small muted">The interviewer always opens with "Walk me through your resume", then asks the 3 or 4 questions most relevant to the role.</p>
           <div class="error-text" id="err" role="alert"></div>${buttons}</div>`
           : `<div class="stack">
-          <div class="field"><label for="qs">Your questions <span class="req">*</span></label><textarea id="qs" style="min-height:200px" placeholder="One question per line">${esc(S.custom)}</textarea><span class="hint">One per line. Caddie always opens with "Walk me through your resume", then asks yours in order.</span></div>
+          <div class="field"><label for="qs">Your questions <span class="req">*</span></label><textarea id="qs" style="min-height:200px" placeholder="One question per line">${esc(S.custom)}</textarea><span class="hint">One per line. The interviewer always opens with "Walk me through your resume", then asks yours in order.</span></div>
           <div class="field"><label for="jobc">Job title (optional)</label><input type="text" id="jobc" value="${esc(S.jobName)}"></div>
           ${buttons}</div>`);
         const preview = $('#preview'), go = $('#go');
@@ -166,10 +166,10 @@
         go.addEventListener('click', async () => { if (await build(go)) toGreenRoom(); });
       } else {
         const list = () => S.questions.map((q, i) => `<li style="padding:.6rem 0;border-top:1px solid var(--border-default)"><div style="display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start"><div><span>${esc(q.text)}</span>${q.why ? `<div class="small muted" style="margin-top:.15rem">${esc(q.why)}</div>` : ''}</div>${q.kind === 'opener' ? '<span class="chip">Always first</span>' : `<button class="btn btn-ghost btn-sm" data-rm="${i}" aria-label="Remove question ${i + 1}">Remove</button>`}</div></li>`).join('');
-        root.innerHTML = frame(`<div class="stack"><p class="muted">${S.questions.length} question${S.questions.length === 1 ? '' : 's'} for <b>${esc(S.jobName || 'your interview')}</b>${S.source === 'ai' ? ', chosen as the most relevant to the role and posting' : ''}. Caddie asks them in this order.</p>
-          ${S.qSource === 'claude' ? '<div class="callout">These questions were written by Claude, an AI from Anthropic.</div>' : S.qSource === 'fallback' ? '<div class="callout warn">Claude could not be reached, so Caddie chose these itself.</div>' : ''}
+        root.innerHTML = frame(`<div class="stack"><p class="muted">${S.questions.length} question${S.questions.length === 1 ? '' : 's'} for <b>${esc(S.jobName || 'your interview')}</b>${S.source === 'ai' ? ', chosen as the most relevant to the role and posting' : ''}. Greenroom asks them in this order.</p>
+          ${S.qSource === 'claude' ? '<div class="callout">These questions were written by Claude, an AI from Anthropic.</div>' : S.qSource === 'fallback' ? '<div class="callout warn">Claude could not be reached, so Greenroom chose these itself.</div>' : ''}
           <ol id="qlist" style="margin:0;padding-left:1.2rem">${list()}</ol>
-          <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary btn-lg" id="go" ${S.questions.length ? '' : 'disabled'}>Go to green room</button></div></div>`);
+          <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary btn-lg" id="go" ${S.questions.length ? '' : 'disabled'}>Check camera and mic</button></div></div>`);
         $('#back').addEventListener('click', () => { S.step = 2; render(); });
         $('#qlist').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (!b) return; S.questions.splice(+b.dataset.rm, 1); render(); });
         $('#go').addEventListener('click', toGreenRoom);
@@ -189,7 +189,7 @@
       <div class="stars" role="radiogroup" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) => `<button type="button" role="radio" aria-checked="false" data-star="${n}" aria-label="${n} star${n > 1 ? 's' : ''}" tabindex="${n === 1 ? 0 : -1}">★</button>`).join('')}</div>
       <div class="small muted" id="rt-label" style="min-height:1.3em" aria-live="polite"></div>
       <div class="field" style="margin-top:.6rem"><label for="rt-comment">Comments (optional)</label><textarea id="rt-comment" maxlength="1000" style="min-height:90px" placeholder="What worked well? What should we improve?"></textarea></div>
-      <p class="small muted" style="margin:.6rem 0 0">Your rating and comment are shared with the Caddie team. Your video, audio and answers are not.</p>
+      <p class="small muted" style="margin:.6rem 0 0">Your rating and comment are shared with the Greenroom team. Your video, audio and answers are not.</p>
       <div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn btn-ghost" id="rt-skip" type="button">Not now</button><button class="btn btn-primary" id="rt-submit" type="button" disabled>Submit rating</button></div></div>`;
     document.body.appendChild(wrap);
     const LABELS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
@@ -231,7 +231,7 @@
     const caps = m.capabilities, pres = C.sessionKind(s) === 'presentation';
     const pq = m.perQuestion[0] || {};
     const transcriptCard = `<div class="card"><div class="card-title"><h3>Transcript</h3><span class="muted small">${pq.words || 0} words${pq.wpm ? ` · ${pq.wpm} wpm` : ''}${pq.eyePct != null ? ` · eye contact ${pq.eyePct}%` : ''}</span></div>${pq.answer ? `<blockquote style="margin:0;padding:.6rem .9rem;background:var(--color-cloud);border-left:3px solid var(--color-secondary-bright);border-radius:0 8px 8px 0;color:var(--text-muted);font-size:.94rem">${esc(pq.answer)}</blockquote>` : `<p class="muted">${caps.speech ? 'No speech was captured.' : 'No transcript. This browser has no speech recognition. Chrome or Edge work best.'}</p>`}</div>`;
-    const qaCard = `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Caddie (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`;
+    const qaCard = `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Interviewer (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`;
     const actionsCard = `<div class="card"><div class="card-title"><h3>Action items</h3></div><ol class="actions-list">${s.actions.length ? s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('') : '<li>Not enough data was captured to suggest changes.</li>'}</ol></div>`;
     const nextCard = `<div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">${pres ? 'Same presentation' : 'Same questions'}</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>`;
     const note = '<p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.</p>';
@@ -249,8 +249,8 @@
       <div class="dash-grid"><div class="stack">${actionsCard}</div><div class="stack">${nextCard}${note}</div></div>`
       : `<div class="dash-grid"><div class="stack">${qaCard}</div><div class="stack">${actionsCard}${nextCard}${note}</div></div>`}</section>`;
     const $ = (x) => root.querySelector(x), stamp = new Date(s.createdAt).toISOString().slice(0, 10);
-    $('#dl-sum').addEventListener('click', () => C.util.download(`caddie-summary-${stamp}.html`, new Blob([C.reportHTML(s)], { type: 'text/html' })));
-    $('#dl-tr').addEventListener('click', () => C.util.download(`caddie-transcript-${stamp}.txt`, new Blob([C.transcriptText(s)], { type: 'text/plain' })));
+    $('#dl-sum').addEventListener('click', () => C.util.download(`greenroom-summary-${stamp}.html`, new Blob([C.reportHTML(s)], { type: 'text/html' })));
+    $('#dl-tr').addEventListener('click', () => C.util.download(`greenroom-transcript-${stamp}.txt`, new Blob([C.transcriptText(s)], { type: 'text/plain' })));
     $('#dl-rec').addEventListener('click', async () => { const b = await C.store.getRecording(s.id); if (!b) return C.util.toast('The recording is not available in this browser.'); C.util.download(`caddie-recording-${stamp}.${/mp4/.test(b.type) ? 'mp4' : 'webm'}`, b); });
     let recUrl = null;
     if (pres && s.hasRecording) {
@@ -284,9 +284,9 @@
           <div class="field"><label for="p-email">Email</label><input type="email" id="p-email" value="${esc(profile.email)}"></div>
           <div class="field"><label for="p-role">Target role</label><input type="text" id="p-role" value="${esc(profile.targetRole)}" placeholder="Used to pre-fill new interviews"></div>
           <div class="field"><label for="p-mode">Default mode</label><select id="p-mode"><option value="practice" ${prefs.mode === 'practice' ? 'selected' : ''}>Practice</option><option value="mock" ${prefs.mode === 'mock' ? 'selected' : ''}>Mock</option></select></div>
-          <div class="field"><label for="p-sil">Seconds of silence before Caddie moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
+          <div class="field"><label for="p-sil">Seconds of silence before the interviewer moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
           <div class="field"><label for="p-grace">Extra seconds to start your answer</label><input type="number" id="p-grace" min="0" max="30" value="${prefs.graceSec || 0}"><span class="hint">Added to the silence window only before you say your first word. 0 keeps it the same throughout.</span></div>
-          <div class="field"><label for="p-voice">Caddie's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
+          <div class="field"><label for="p-voice">Interviewer's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
           <div class="field"><label for="p-speed">Speaking speed: <span id="p-speed-v">${(+prefs.voiceSpeed || 1).toFixed(2)}x</span></label><input type="range" id="p-speed" min="0.85" max="1.15" step="0.05" value="${+prefs.voiceSpeed || 1}"></div>
           <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test">Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
         <div class="card"><div class="card-title"><h3>Session logs</h3><span class="muted small">${sessions.length} saved on this device</span></div>
@@ -294,7 +294,7 @@
             <td><a href="#/app/summary/${s.id}">Summary</a><br><a href="#" data-rec="${s.id}" ${s.hasRecording ? '' : 'hidden'}>Recording</a><br><a href="#" data-tr="${s.id}">Transcript</a></td><td><button class="btn btn-ghost btn-sm" data-del="${s.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No sessions yet</strong>Completed interviews are listed here with their summary, recording and transcript.</div>'}</div></div>
       <div class="stack"><div class="card"><h3 style="margin-bottom:.6rem">Credits and subscription</h3><dl class="kv"><dt>Plan</dt><dd>Preview (free)</dd><dt>Sessions used</dt><dd>${sessions.length}</dd><dt>Limit</dt><dd>None</dd></dl><p class="small muted" style="margin-top:.7rem">Paid plans are not available yet. See <a href="#/plans">Plans</a>.</p></div>
         <div class="card stack" id="ai-card"><h3>AI features</h3>
-          ${ai.offline ? '<p class="small muted">AI features need the Caddie server on your computer (<code>npm start</code>). They are not available here.</p>'
+          ${ai.offline ? '<p class="small muted">AI features need the Greenroom server on your computer (<code>npm start</code>). They are not available here.</p>'
             : ai.available ? `<p class="small"><span class="chip good">On</span> ${ai.source === 'test' ? 'Test mode: canned responses, no key used.' : ai.source === 'environment' ? 'Using the key from your ANTHROPIC_API_KEY setting.' : `A key ending in <b>${esc(ai.last4)}</b> is saved on this computer.`}</p>
               <label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-default" ${prefs.aiConsent ? 'checked' : ''} style="margin-top:.25rem"><span>Turn AI questions and follow-ups on by default</span></label>
               ${ai.source === 'saved' ? '<div><button class="btn btn-ghost btn-sm" id="ai-remove">Remove key</button></div>' : ''}`
@@ -318,12 +318,12 @@
     $('#p-test').addEventListener('click', async () => {
       C.voice.cancel(); C.voice.configure({ speed: +$('#p-speed').value });
       const v = voices.find((x) => x.voiceURI === $('#p-voice').value) || voices[0] || null;
-      await C.voice.speak("Hi, I'm Caddie. Thanks for joining me today. Let's start with your background.", v, null);
+      await C.voice.speak("Hi, I'm your AI interviewer. Thanks for joining me today. Let's start with your background.", v, null);
     });
     root.addEventListener('click', async (e) => {
       const rec = e.target.closest('[data-rec]'), tr = e.target.closest('[data-tr]'), del = e.target.closest('[data-del]');
-      if (rec) { e.preventDefault(); const b = await C.store.getRecording(rec.dataset.rec); if (b) C.util.download(`caddie-recording.${/mp4/.test(b.type) ? 'mp4' : 'webm'}`, b); }
-      if (tr) { e.preventDefault(); const s = await C.store.getSession(tr.dataset.tr); if (s) C.util.download('caddie-transcript.txt', new Blob([C.transcriptText(s)], { type: 'text/plain' })); }
+      if (rec) { e.preventDefault(); const b = await C.store.getRecording(rec.dataset.rec); if (b) C.util.download(`greenroom-recording.${/mp4/.test(b.type) ? 'mp4' : 'webm'}`, b); }
+      if (tr) { e.preventDefault(); const s = await C.store.getSession(tr.dataset.tr); if (s) C.util.download('greenroom-transcript.txt', new Blob([C.transcriptText(s)], { type: 'text/plain' })); }
       if (del) { if (del.dataset.armed) { await C.store.deleteSession(del.dataset.del); V.settings(root); } else { del.dataset.armed = '1'; del.textContent = 'Confirm?'; del.classList.replace('btn-ghost', 'btn-danger'); } }
     });
     const fk = $('#f-key');

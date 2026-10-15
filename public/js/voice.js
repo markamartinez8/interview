@@ -1,4 +1,4 @@
-// Caddie's voice: the voices built into your browser/OS, with better ranking, sentence pacing and pronunciation fixes.
+// Interviewer's voice: the voices built into your browser/OS, with better ranking, sentence pacing and pronunciation fixes.
 (function (C) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

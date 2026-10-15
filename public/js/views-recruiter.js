@@ -44,11 +44,11 @@
         <div class="row" style="margin-top:.9rem"><a class="btn btn-ghost btn-sm" href="#/recruiter/edit/${esc(r.id)}">Edit</a><button class="btn btn-ghost btn-sm" data-preview="${esc(r.id)}">Preview interview</button><button class="btn btn-ghost btn-sm" data-del="${esc(r.id)}">Delete</button></div></div>`;
     };
     root.innerHTML = `<section class="container page">
-      <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Caddie for Recruiters</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Recruiter Dashboard</h1></div></div>
-      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">Create a new job or role</h2><p>Add the role, the job description, the questions Caddie asks and your applicants.</p></div><a class="btn btn-lg" href="#/recruiter/new">Create new role</a></div>
+      <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Greenroom for Recruiters</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Recruiter Dashboard</h1></div></div>
+      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">Create a new job or role</h2><p>Add the role, the job description, the questions the interviewer asks and your applicants.</p></div><a class="btn btn-lg" href="#/recruiter/new">Create new role</a></div>
       <div class="page-head" style="margin-bottom:.8rem"><h2 class="col-title" style="flex:1">Roles</h2></div>
       ${roles.length ? `<div class="roles">${roles.map(card).join('')}</div><p class="small muted" style="margin-top:1rem">Roles are saved in this browser. Start interview runs the interview for that applicant on this computer and marks them completed when they finish.</p>`
-        : '<div class="empty"><strong>No roles yet</strong>Create your first role to set the questions Caddie asks.</div>'}</section>`;
+        : '<div class="empty"><strong>No roles yet</strong>Create your first role to set the questions the interviewer asks.</div>'}</section>`;
     root.onclick = (e) => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.dataset.preview) { const r = C.store.getRole(b.dataset.preview); if (r) startInterview(r, null); }
@@ -78,10 +78,10 @@
         <div class="qbtns"><button type="button" class="btn btn-ghost btn-sm" data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move question ${i + 2} up">↑</button><button type="button" class="btn btn-ghost btn-sm" data-down="${i}" ${i === S.qs.length - 1 ? 'disabled' : ''} aria-label="Move question ${i + 2} down">↓</button><button type="button" class="btn btn-ghost btn-sm" data-rm="${i}" aria-label="Remove question ${i + 2}">Remove</button></div></div>`).join('');
     }
     function jdNote() {
-      if (!S.jd.trim()) return 'Paste the posting. Caddie reads the responsibilities and requirements so you can check it understood the role.';
+      if (!S.jd.trim()) return 'Paste the posting. Greenroom reads the responsibilities and requirements so you can check it understood the role.';
       const a = C.jd.analyze(S.jd, S.title);
       if (a.length < 80) return 'That is quite short. A full posting gives better questions.';
-      return `Caddie found ${a.resp.length} responsibilit${a.resp.length === 1 ? 'y' : 'ies'} and ${a.req.length} requirement${a.req.length === 1 ? '' : 's'}${a.seniority ? `, a ${a.seniority} level role` : ''}${a.skills.length ? `, and skills like ${a.skills.slice(0, 4).join(', ')}` : ''}.`;
+      return `Greenroom found ${a.resp.length} responsibilit${a.resp.length === 1 ? 'y' : 'ies'} and ${a.req.length} requirement${a.req.length === 1 ? '' : 's'}${a.seniority ? `, a ${a.seniority} level role` : ''}${a.skills.length ? `, and skills like ${a.skills.slice(0, 4).join(', ')}` : ''}.`;
     }
     function drawQs() {
       $('#qs').innerHTML = qRows();
@@ -93,7 +93,7 @@
     // Up to five suggestions from the job description; accepting or ignoring one brings the next best into view.
     function drawSuggestions() {
       const box = $('#sugg'); if (!box) return;
-      if (S.jd.trim().length < 40) { box.innerHTML = '<p class="small muted">Paste a job description above and Caddie will suggest up to 5 questions based on it.</p>'; return; }
+      if (S.jd.trim().length < 40) { box.innerHTML = '<p class="small muted">Paste a job description above and Greenroom will suggest up to 5 questions based on it.</p>'; return; }
       const list = C.questions.suggest({ jobName: S.title, jd: S.jd, n: 12, exclude: [...S.qs, ...S.ignored] }).slice(0, 5);
       const full = S.qs.length >= MAX_Q;
       box.innerHTML = list.length ? list.map((q, i) => `<div class="sugg"><div><div>${esc(q.text)}</div><div class="small muted">${esc(q.why)}</div></div><div class="sugg-btns"><button type="button" class="btn btn-primary btn-sm" data-accept="${i}" ${full ? 'disabled title="You have added 10 questions"' : ''}>Add</button><button type="button" class="btn btn-ghost btn-sm" data-ignore="${i}">Ignore</button></div></div>`).join('') : '<p class="small muted">No more suggestions for this posting.</p>';
@@ -110,13 +110,13 @@
       $('#r-min').value = S.minutes || ''; $('#r-min').disabled = on;
     }
 
-    root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Caddie for Recruiters</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${editing ? 'Edit role' : 'Create a new role'}</h1></div></div>
+    root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Greenroom for Recruiters</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">${editing ? 'Edit role' : 'Create a new role'}</h1></div></div>
       <form class="stack" id="role-form" novalidate style="max-width:820px">
         <div class="card stack">
           <div class="grid2"><div class="field"><label for="r-title">Role title <span class="req">*</span></label><input type="text" id="r-title" value="${esc(S.title)}" placeholder="e.g. Senior Backend Engineer" maxlength="120"></div>
             <div class="field"><label for="r-status">Status</label><select id="r-status">${STATUSES.map(([k, n]) => `<option value="${k}" ${k === S.status ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>
           <div class="field"><label for="r-jd">Job description</label><textarea id="r-jd" style="min-height:200px" placeholder="Paste the full job description here">${esc(S.jd)}</textarea><span class="hint" id="jd-note" aria-live="polite">${esc(jdNote())}</span></div></div>
-        <div class="card stack"><div class="row" style="justify-content:space-between"><h3>Questions for Caddie to ask</h3><span class="chip" id="q-count"></span></div>
+        <div class="card stack"><div class="row" style="justify-content:space-between"><h3>Questions for the interviewer to ask</h3><span class="chip" id="q-count"></span></div>
           <span class="hint">Every interview starts with the default question. Add up to ${MAX_Q} more of your own.</span>
           <div class="q-editor" id="qs"></div><div><button type="button" class="btn btn-ghost btn-sm" id="q-add">Add a question</button></div>
           <div class="sugg-wrap"><h3 style="font-size:1rem">Suggested questions</h3><span class="hint">Based on the job description. Add the ones you like, or ignore them.</span><div id="sugg" class="stack" style="gap:.6rem;margin-top:.6rem"></div></div></div>
@@ -181,7 +181,7 @@
   // ---------------- recruiter profile and default settings ----------------
   V.recruiterSettings = (root) => {
     const r = C.store.getRecruiter();
-    root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Caddie for Recruiters</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Profile and Settings</h1></div></div>
+    root.innerHTML = `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Greenroom for Recruiters</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Profile and Settings</h1></div></div>
       <form class="stack" id="rs-form" style="max-width:720px">
         <div class="card stack"><h3>Profile</h3>
           <div class="field"><label for="rs-name">Name</label><input type="text" id="rs-name" value="${esc(r.name)}"></div>

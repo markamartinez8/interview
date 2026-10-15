@@ -1,4 +1,4 @@
-// Practice Presenting: green room and a room where you see only yourself. Caddie is not in the room; it listens and gives feedback afterward.
+// Practice Presenting: camera check and a room where you see only yourself. There is no interviewer in the room; Greenroom listens and gives feedback afterward.
 (function (C) {
   const { esc, fmtDur, uid } = C.util;
   const statusChip = (text, cls) => `<span class="chip ${cls}">${esc(text)}</span>`;
@@ -12,14 +12,14 @@
     const set = (id, text, cls) => { const el = $(id); if (el) el.innerHTML = statusChip(text, cls); };
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // ---------------- green room (only you) ----------------
+    // ---------------- camera and mic check (only you) ----------------
     root.innerHTML = `<section class="container page">
-      <div class="page-head"><div class="stack" style="gap:.4rem"><span class="eyebrow">Green room</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Check your camera and mic</h1></div></div>
+      <div class="page-head"><div class="stack" style="gap:.4rem"><span class="eyebrow">Before you start</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Check your camera and mic</h1></div></div>
       <div class="prep-grid">
         <div class="card"><div class="preview"><video id="pv" autoplay muted playsinline></video><div class="overlay-msg" id="pv-msg">Asking for camera and microphone…</div></div>
           <div style="margin-top:1rem"><div class="row" style="justify-content:space-between"><span class="label">Microphone level</span><span class="small muted" id="mic-note">Say something to test</span></div><div class="meter"><div id="mic-meter"></div></div></div></div>
         <div class="stack">
-          <div class="card"><h3 style="margin-bottom:.7rem">Your session</h3><dl class="kv"><dt>Presentation</dt><dd>${esc(setup.title)}</dd><dt>In the room</dt><dd>Just you. Caddie listens and gives feedback afterward.</dd></dl></div>
+          <div class="card"><h3 style="margin-bottom:.7rem">Your session</h3><dl class="kv"><dt>Presentation</dt><dd>${esc(setup.title)}</dd><dt>In the room</dt><dd>Just you. Greenroom listens and gives feedback afterward.</dd></dl></div>
           <div class="card"><h3 style="margin-bottom:.7rem">Ready check</h3><ul class="checklist">
             <li><span>Camera</span><span id="ck-cam">${statusChip('Waiting', 'na')}</span></li><li><span>Microphone</span><span id="ck-mic">${statusChip('Waiting', 'na')}</span></li>
             <li><span>Face and posture analysis</span><span id="ck-vis">${statusChip('Waiting', 'na')}</span></li>

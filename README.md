@@ -1,6 +1,6 @@
-# Caddie
+# Greenroom
 
-Practice interviews with Caddie, a virtual interviewer, and get feedback on speech, eye contact and posture.
+Practice interviews with Greenroom, a virtual interviewer, and get feedback on speech, eye contact and posture.
 Everything runs in the browser. Sessions, transcripts and recordings are stored on the user's device only.
 
 ## Run it
@@ -18,15 +18,15 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/js/main.js`: hash router and header/footer.
 - `public/js/views-public.js`: Home, Value, About, Plans.
 - `public/js/views-app.js`: Dashboard, Setup, Summary, Settings.
-- `public/js/interview.js`: green room and live interview room.
+- `public/js/interview.js`: camera and mic check and live interview room.
 - `public/js/analysis.js`: speech (Web Speech API + mic level), face and posture (MediaPipe) metrics.
 - `public/js/summary.js`: scoring, action items, downloadable reports.
 - `public/js/jd.js`: reads a pasted job description (responsibilities, requirements, skills, seniority, years).
 - `public/js/questions.js`: picks the 3 to 4 most relevant questions; "Walk me through your resume" is always first.
-- `public/js/avatar.js`: Caddie's animated face (lip-sync, blinks, gaze, nods).
-- `public/js/voice.js`: Caddie's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
+- `public/js/avatar.js`: The interviewer's animated face (lip-sync, blinks, gaze, nods).
+- `public/js/voice.js`: Interviewer's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
 - `public/js/views-recruiter.js`: Recruiter area (link on the homepage footer, no login yet): roles with status, job description, a default opening question plus up to 10 more (with suggestions from the job description), applicants, and per-role settings (camera required, minutes per question) that default to the recruiter's Profile and Settings. Uses a deep-red theme (`.theme-recruiter`).
-- `public/js/presentation.js`: Practice Presenting: a green room and a room where you see only yourself.
+- `public/js/presentation.js`: Practice Presenting: a camera check and a room where you see only yourself.
 - `#/styleguide` (in the running app): live style guide for colors, type, components and wording. Source: `public/js/views-styleguide.js`.
 - `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
 
@@ -34,12 +34,12 @@ Login is intentionally skipped for now.
 
 ## Optional AI features (Claude)
 
-Off by default. When turned on, Caddie sends text (never video or audio) to Anthropic's Claude to write questions and ask follow-ups.
+Off by default. When turned on, Greenroom sends text (never video or audio) to Anthropic's Claude to write questions and ask follow-ups.
 
 1. Create an API key at https://platform.claude.com/settings/keys (add credits under Billing first).
-2. Open Settings in Caddie, paste the key under "AI features". It is saved to `data/config.json` on this computer (git-ignored).
+2. Open Settings in Greenroom, paste the key under "AI features". It is saved to `data/config.json` on this computer (git-ignored).
    Or set the `ANTHROPIC_API_KEY` environment variable before `npm start`.
-3. Choose "Use Claude" when setting up an interview, and tick the follow-up box in the green room.
+3. Choose "Use Claude" when setting up an interview, and tick the follow-up box on the camera and mic check.
 
 The model defaults to `claude-sonnet-5-5`; override with `CADDIE_MODEL`. The server listens on 127.0.0.1 only and rejects cross-origin requests.
 `CADDIE_FAKE_AI=1` returns canned responses for testing without a key.
@@ -52,7 +52,7 @@ Each visitor's sessions, recordings and transcripts stay in their own browser. T
 
 ## Ratings and admin analytics
 
-After a completed interview or presentation, Caddie asks for a 1 to 5 star rating and an optional comment.
+After a completed interview or presentation, Greenroom asks for a 1 to 5 star rating and an optional comment.
 The footer on the homepage has an **Admin** link (username `caddie`, password `test` by default; change them with `CADDIE_ADMIN_USER` and `CADDIE_ADMIN_PASSWORD`).
 The admin page shows anonymous counts (people who visited the homepage, started and completed each workflow) and average ratings with comments.
 
