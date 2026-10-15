@@ -8,23 +8,26 @@
   const app = document.getElementById('app');
   let current = null;
 
+  // The wordmark carries a small Beta tag everywhere; `extra` adds an area badge (Admin, Recruiter) after it.
+  const logoLink = (extra = '') => `<a class="logo" href="#/">${LOGO}Greenroom<span class="beta-tag">Beta</span>${extra}</a>`;
+
   function header(route, minimal) {
     const inApp = route.startsWith('/app');
     if (route === '/admin') {
-      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Greenroom <span class="badge" style="font-size:.7rem">Admin</span></a><nav class="nav" aria-label="Admin"><a href="#/styleguide">Style guide</a><a href="#/">Back to Greenroom</a></nav></div></header>`;
+      return `<header class="site-header"><div class="container">${logoLink(' <span class="badge" style="font-size:.7rem">Admin</span>')}<nav class="nav" aria-label="Admin"><a href="#/styleguide">Style guide</a><a href="#/">Back to Greenroom</a></nav></div></header>`;
     }
     if (route.startsWith('/recruiter')) {
-      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Greenroom <span class="badge" style="font-size:.7rem">Recruiter</span></a><nav class="nav" aria-label="Recruiter"><a href="#/recruiter" ${route === '/recruiter' ? 'aria-current="page"' : ''}>Roles</a><a href="#/recruiter/settings" ${route === '/recruiter/settings' ? 'aria-current="page"' : ''}>Profile and Settings</a><a class="btn btn-primary btn-sm" href="#/recruiter/new">Create new role</a></nav></div></header>`;
+      return `<header class="site-header"><div class="container">${logoLink(' <span class="badge" style="font-size:.7rem">Recruiter</span>')}<nav class="nav" aria-label="Recruiter"><a href="#/recruiter" ${route === '/recruiter' ? 'aria-current="page"' : ''}>Roles</a><a href="#/recruiter/settings" ${route === '/recruiter/settings' ? 'aria-current="page"' : ''}>Profile and Settings</a><a class="btn btn-primary btn-sm" href="#/recruiter/new">Create new role</a></nav></div></header>`;
     }
 
     const link = (href, text, cur) => `<a href="${href}" ${cur ? 'aria-current="page"' : ''}>${text}</a>`;
     const nav = minimal ? '' : inApp
       ? `${link('#/app', 'Dashboard', route === '/app')}${link('#/app/settings', 'Profile and Settings', route === '/app/settings')}<a class="btn btn-primary btn-sm" href="#/app/setup">Begin session</a>`
       : `${link('#/value', 'Value', route === '/value')}${link('#/about', 'About', route === '/about')}${link('#/plans', 'Plans', route === '/plans')}<a class="btn btn-primary btn-sm" href="#/app">Start practicing</a>`;
-    return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Greenroom</a><nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
+    return `<header class="site-header"><div class="container">${logoLink()}<nav class="nav" aria-label="Main">${nav}</nav></div></header>`;
   }
   // The recruiter link appears only on the main homepage.
-  const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Greenroom · Interview practice</span><span class="small">Sessions are stored in your browser. Greenroom counts anonymous visits and any rating you choose to leave, and never collects your video, audio or answers. Optional AI features send text to Anthropic&rsquo;s Claude.</span></div>${route === '/' ? '<div class="foot-links"><a class="foot-link" href="#/recruiter">Recruiter login</a><a class="foot-link" href="#/admin">Admin</a></div>' : ''}</div></footer>`;
+  const footer = (route) => `<footer class="site-footer"><div class="container"><div class="foot-left"><span>Greenroom · Interview practice</span><span class="small">Sessions are stored in your browser. Greenroom counts anonymous visits and any rating you choose to leave, and never collects your video, audio or answers. Optional AI features send text to Anthropic&rsquo;s Claude.</span></div><div class="foot-links">${route === '/' ? '<a class="foot-link" href="#/recruiter">Recruiter login</a><a class="foot-link" href="#/admin">Admin</a>' : ''}<span class="small">Contact: <a class="foot-link" href="mailto:thegreenroom.techapp@gmail.com">thegreenroom.techapp@gmail.com</a></span></div></div></footer>`;
 
   // One visit per browsing session, whichever page the person lands on.
   function trackVisit() {

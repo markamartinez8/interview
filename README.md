@@ -53,7 +53,7 @@ Each visitor's sessions, recordings and transcripts stay in their own browser. T
 ## Ratings and admin analytics
 
 After a completed interview or presentation, Greenroom asks for a 1 to 5 star rating and an optional comment.
-The footer on the homepage has an **Admin** link (username `caddie`, password `test` by default; change them with `CADDIE_ADMIN_USER` and `CADDIE_ADMIN_PASSWORD`).
+The footer on the homepage has an **Admin** link (the built-in sign-in is stored as hashes in `server.js`; override it with `CADDIE_ADMIN_USER` and `CADDIE_ADMIN_PASSWORD`). Once signed in, the admin can delete any rating; the stars and comment given together are one entry and are deleted together.
 The admin page shows anonymous counts (people who visited the homepage, started and completed each workflow) and average ratings with comments.
 
 - Run with `npm start`: visits, starts, completions, ratings and comments from every visitor are saved by the server in `data/events.jsonl`.
@@ -67,7 +67,7 @@ Only an anonymous visitor id, the event type, and the rating and comment are col
 Run `npm start` on a host that runs Node. Set these environment variables:
 
 - `CADDIE_PUBLIC=1` turns on public mode: visitors' anonymous analytics are accepted and the server listens on all addresses. (AI endpoints stay local-only.)
-- `CADDIE_ADMIN_PASSWORD` (and optionally `CADDIE_ADMIN_USER`) replaces the default admin login. Always set it on a public host.
+- `CADDIE_ADMIN_PASSWORD` (and optionally `CADDIE_ADMIN_USER`) replaces the built-in admin login, and takes priority over it. Set a strong one on a public host; if it is already set there, change it to change the live password.
 - `CADDIE_DATA_DIR` points at a folder that survives restarts (for example a mounted disk). Analytics are stored there in `events.jsonl`.
 - `PORT` is usually provided by the host.
 
@@ -80,10 +80,10 @@ Build command: `npm install`. Start command: `npm start`. Camera access needs ht
 1. In Railway, choose **New Project**, then **Deploy from GitHub repo**, and pick this repository and the branch you want live.
 2. Open the service's **Variables** tab and add:
    - `CADDIE_PUBLIC` = `1`
-   - `CADDIE_ADMIN_PASSWORD` = a strong password of your own (the default is `test`; never leave it on a public site)
+   - `CADDIE_ADMIN_PASSWORD` = a strong password of your own (this overrides the built-in sign-in, so change it here to change the live password)
    - `CADDIE_DATA_DIR` = `/data`
 3. Add a **Volume** to the service and mount it at `/data`. Without it, ratings and analytics are lost on every restart or redeploy.
 4. Under **Settings, Networking**, choose **Generate Domain**. That `https://…up.railway.app` link is the shareable app, and camera and microphone work because it is https.
-5. Visit the link, open the footer's **Admin** link on the homepage, and sign in with username `caddie` and your password.
+5. Visit the link, open the footer's **Admin** link on the homepage, and sign in with your admin username and password.
 
 Railway sets `PORT` itself. AI features stay local-only on a public host (they never run for visitors), so there is no need to add an Anthropic key.

@@ -33,11 +33,25 @@ function send(res, code, obj) { res.writeHead(code, { 'Content-Type': 'applicati
 // ---- Analytics and admin. Events are anonymous (visitor id, event type, rating and comment) and kept in data/events.jsonl.
 // Local only by default; set CADDIE_PUBLIC=1 when hosting the server for other people (the AI endpoints stay local-only).
 const DATA_DIR = process.env.CADDIE_DATA_DIR || path.join(__dirname, 'data'), EVENTS = path.join(DATA_DIR, 'events.jsonl');
-const ADMIN_USER = process.env.CADDIE_ADMIN_USER || 'caddie', ADMIN_PASS = process.env.CADDIE_ADMIN_PASSWORD || 'test';
+// Sign-in: set CADDIE_ADMIN_USER and CADDIE_ADMIN_PASSWORD on the host to override. Without them the built-in sign-in is used,
+// stored only as SHA-256 hashes (never plain text). The user name is not case-sensitive.
 const sha = (v) => crypto.createHash('sha256').update(String(v)).digest();
+const DEFAULT_USER_HASH = Buffer.from('9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', 'hex');
+const DEFAULT_PASS_HASH = Buffer.from('c887fccb09ca7da3d2118bfaaed1edd1c5ea5f76a9136661b38d6dda0cb963b0', 'hex');
+const USER_HASH = process.env.CADDIE_ADMIN_USER ? sha(process.env.CADDIE_ADMIN_USER.toLowerCase()) : DEFAULT_USER_HASH;
+const PASS_HASH = process.env.CADDIE_ADMIN_PASSWORD ? sha(process.env.CADDIE_ADMIN_PASSWORD) : DEFAULT_PASS_HASH;
 const tokens = new Map(), attempts = new Map();
+// Events the admin has deleted are recorded as 'rating_deleted' lines pointing at the rating's id, then hidden here. The file is append-only.
 function readEvents() {
-  try { return fs.readFileSync(EVENTS, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch { return []; }
+  let all = [];
+  try { all = fs.readFileSync(EVENTS, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch { return []; }
+  const gone = new Set(all.filter((e) => e.type === 'rating_deleted').map((e) => e.target));
+  return all.filter((e) => e.type !== 'rating_deleted' && !(e.type === 'rating' && gone.has(analytics.eventId(e))));
+}
+function adminAuthed(req) {
+  const t = String(req.headers.authorization || '').replace(/^Bearer /, ''), exp = tokens.get(t);
+  if (!exp || exp < Date.now()) { tokens.delete(t); return false; }
+  return true;
 }
 async function handleAnalytics(req, res, urlPath) {
   const host = String(req.headers.host || '');
@@ -54,6 +68,7 @@ async function handleAnalytics(req, res, urlPath) {
         const stars = Math.round(Number(b.stars));
         if (!(stars >= 1 && stars <= 5) || !['interview', 'presentation'].includes(b.kind)) return send(res, 400, { error: 'Bad rating' });
         ev.kind = b.kind; ev.stars = stars; ev.comment = String(b.comment || '').slice(0, 1000);
+        ev.id = typeof b.id === 'string' && /^[\w-]{8,40}$/.test(b.id) ? b.id : crypto.randomUUID();
       }
       try { fs.mkdirSync(DATA_DIR, { recursive: true }); if (!fs.existsSync(EVENTS) || fs.statSync(EVENTS).size < 8 * 1024 * 1024) fs.appendFileSync(EVENTS, JSON.stringify(ev) + '\n'); } catch (e) { console.error('Could not save event:', e.message); }
       return send(res, 200, { ok: true });
@@ -66,16 +81,23 @@ async function handleAnalytics(req, res, urlPath) {
       if (++a.n > 8) { attempts.set(ip, a); return send(res, 429, { error: 'Too many attempts. Try again in a minute.' }); }
       attempts.set(ip, a);
       const b = await readJson(req, 2000);
-      const ok = crypto.timingSafeEqual(sha(b.username), sha(ADMIN_USER)) & crypto.timingSafeEqual(sha(b.password), sha(ADMIN_PASS));
+      const ok = crypto.timingSafeEqual(sha(String(b.username || '').trim().toLowerCase()), USER_HASH) & crypto.timingSafeEqual(sha(String(b.password || '')), PASS_HASH);
       if (!ok) return send(res, 401, { error: 'Incorrect username or password.' });
       const token = crypto.randomBytes(24).toString('hex'); tokens.set(token, now + 8 * 3600 * 1000);
       return send(res, 200, { token });
     }
     if (urlPath === '/api/admin/stats' && req.method === 'GET') {
-      const t = String(req.headers.authorization || '').replace(/^Bearer /, ''), exp = tokens.get(t);
-      if (!exp || exp < Date.now()) { tokens.delete(t); return send(res, 401, { error: 'Sign in again.' }); }
+      if (!adminAuthed(req)) return send(res, 401, { error: 'Sign in again.' });
       const events = readEvents();
       return send(res, 200, { source: 'server', eventCount: events.length, stats: analytics.aggregate(events) });
+    }
+    if (urlPath === '/api/admin/rating/delete' && req.method === 'POST') {
+      if (!adminAuthed(req)) return send(res, 401, { error: 'Sign in again.' });
+      const b = await readJson(req, 2000);
+      const id = typeof b.id === 'string' ? b.id : '';
+      if (!id || id.length > 120 || !readEvents().some((e) => e.type === 'rating' && analytics.eventId(e) === id)) return send(res, 404, { error: 'That rating no longer exists.' });
+      try { fs.appendFileSync(EVENTS, JSON.stringify({ t: Date.now(), type: 'rating_deleted', target: id }) + '\n'); } catch (e) { console.error('Could not delete rating:', e.message); return send(res, 500, { error: 'Could not delete.' }); }
+      return send(res, 200, { ok: true });
     }
     return send(res, 404, { error: 'Not found' });
   } catch (e) { return send(res, 400, { error: 'Bad request' }); }

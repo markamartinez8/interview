@@ -15,7 +15,26 @@
       if (r.ok) return { token: (await r.json()).token };
       if (r.status === 401 || r.status === 429) return { error: (await r.json().catch(() => ({}))).error || 'Incorrect username or password.' };
     } catch { /* no server */ }
-    return username === 'caddie' && password === 'test' ? { token: 'local' } : { error: 'Incorrect username or password.' };
+    return (await localCheck(username, password)) ? { token: 'local' } : { error: 'Incorrect username or password.' };
+  }
+  // Same sign-in as the server's built-in one, compared as SHA-256 hashes so the password is not written in the page source.
+  const USER_HASH = '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', PASS_HASH = 'c887fccb09ca7da3d2118bfaaed1edd1c5ea5f76a9136661b38d6dda0cb963b0';
+  async function sha256(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  async function localCheck(username, password) {
+    try { return (await sha256(String(username).trim().toLowerCase())) === USER_HASH && (await sha256(String(password))) === PASS_HASH; } catch { return false; }
+  }
+  async function deleteRating(token, source, id) {
+    if (source === 'server') {
+      const r = await fetch('/api/admin/rating/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id }) });
+      if (r.status === 401) return { expired: true };
+      if (!r.ok && r.status !== 404) return { error: 'Could not delete that rating. Try again.' };
+      return {};
+    }
+    C.analytics.deleteLocal(id);
+    return {};
   }
   async function loadStats(token) {
     if (token !== 'local') {
@@ -49,12 +68,13 @@
     const r = f.rating;
     const ratingVal = r.avg == null ? '—' : `${r.avg.toFixed(1)}<small> / 5</small>`;
     const ratingSub = r.avg == null ? 'No ratings yet' : `<span class="stars-static" aria-label="${r.avg} out of 5 stars">${starText(r.avg)}</span> ${r.count} rating${r.count === 1 ? '' : 's'} · ${r.withComments} with comments`;
-    const comments = r.comments.length ? `<ul class="comments">${r.comments.map((c) => `<li><span class="stars-static" aria-label="${c.stars} out of 5">${starText(c.stars)}</span><div>${esc(c.comment)}</div><div class="small muted">${fmtDateTime(c.t)}</div></li>`).join('')}</ul>` : '<p class="small muted">No comments yet.</p>';
+    // One row per rating. The stars and the comment from the same person and sitting are shown together and deleted together.
+    const entries = r.entries.length ? `<ul class="comments">${r.entries.map((c) => `<li class="entry"><div class="entry-main"><span class="stars-static" aria-label="${c.stars} out of 5">${starText(c.stars)}</span><div>${c.comment ? esc(c.comment) : '<span class="muted">No comment</span>'}</div><div class="small muted">${fmtDateTime(c.t)}</div></div><button class="btn btn-ghost btn-sm entry-del" type="button" data-del="${esc(c.id)}" data-stars="${c.stars}" aria-label="Delete this ${c.stars}-star rating${c.comment ? ' and its comment' : ''}">Delete</button></li>`).join('')}</ul>` : '<p class="small muted">No ratings yet.</p>';
     return `<div class="stack"><h2 class="col-title">${name}</h2>
       ${stat(`Users who started the ${name.toLowerCase().replace(/s$/, '')} workflow`, f.startedUsers, f.startedCount !== f.startedUsers ? `${f.startedCount} starts in total` : '')}
       ${stat(`Users who completed the ${name.toLowerCase().replace(/s$/, '')} workflow`, f.completedUsers, f.completionRate != null ? `${f.completionRate}% of the users who started` : '')}
       ${stat(`Average rating for ${name.toLowerCase()}`, ratingVal, ratingSub)}
-      <div class="card"><h3 style="margin-bottom:.6rem">${name.replace(/s$/, '')} comments</h3>${comments}</div></div>`;
+      <div class="card"><h3 style="margin-bottom:.6rem">${name.replace(/s$/, '')} ratings and comments</h3>${entries}</div></div>`;
   }
 
   V.admin = async (root) => {
@@ -72,5 +92,15 @@
       <div class="dash-cols" style="margin-top:1rem">${flowHTML('Interviews', s.interview)}${flowHTML('Presentations', s.presentation)}</div>
       <p class="small muted" style="margin-top:1rem">Users are unique anonymous people (one per browser). Visits are total visits: each time someone arrives at the site in a new browser tab or window counts once, however many pages they open. Started means the live interview or presentation began. Completed means an interview ran through every question, or a presentation was ended by the presenter.</p></section>`;
     root.querySelector('#ad-out').addEventListener('click', () => { setToken(null); V.admin(root); });
+    root.onclick = async (e) => { // assigned, not added, so re-rendering the page never stacks handlers
+      const b = e.target.closest('[data-del]'); if (!b) return;
+      if (!confirm(`Delete this ${b.dataset.stars}-star rating and its comment? This cannot be undone.`)) return;
+      b.disabled = true;
+      const r = await deleteRating(token, res.source, b.dataset.del);
+      if (r.expired) { setToken(null); return login(root, 'Your session expired. Sign in again.'); }
+      if (r.error) { C.util.toast(r.error); b.disabled = false; return; }
+      C.util.toast('Rating deleted.');
+      V.admin(root);
+    };
   };
 })(window.Caddie);

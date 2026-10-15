@@ -102,9 +102,9 @@
       <div class="card flat"><h3>Honest</h3><p class="muted">Plain language, visible privacy notes, and clear labels when AI is involved.</p></div></div>`;
 
     const logo = `<div class="sg-cols">
-      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Greenroom</a></div><h3>Primary</h3><p class="muted small">The G mark plus the wordmark "Greenroom" in Bricolage Grotesque 750, one word with no "The". Links to the homepage.</p></div>
-      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Greenroom <span class="badge" style="font-size:.7rem">Admin</span></a></div><h3>With area badge</h3><p class="muted small">Used for Admin and Recruiter. Badge turns red in the recruiter theme.</p></div>
-      <div class="card flat"><div class="sg-logo-demo" style="background:var(--room);border-radius:var(--radius)"><a class="logo" href="#/styleguide" style="color:#fff">${C.logoMark('#5B5BD6', '#2FBF7A')}Greenroom</a></div><h3>On dark</h3><p class="muted small">Wordmark switches to white and the mark to the lighter indigo and green. Keep clear space equal to the mark's width.</p></div></div>
+      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Greenroom<span class="beta-tag">Beta</span></a></div><h3>Primary</h3><p class="muted small">The G mark plus the wordmark "Greenroom" in Bricolage Grotesque 750, one word with no "The", followed by a small outlined "Beta" tag (<code>.beta-tag</code>) while the product is in beta. Links to the homepage.</p></div>
+      <div class="card flat"><div class="sg-logo-demo"><a class="logo" href="#/styleguide">${C.LOGO}Greenroom<span class="beta-tag">Beta</span> <span class="badge" style="font-size:.7rem">Admin</span></a></div><h3>With area badge</h3><p class="muted small">Used for Admin and Recruiter. Badge turns red in the recruiter theme.</p></div>
+      <div class="card flat"><div class="sg-logo-demo" style="background:var(--room);border-radius:var(--radius)"><a class="logo" href="#/styleguide" style="color:#fff">${C.logoMark('#5B5BD6', '#2FBF7A')}Greenroom<span class="beta-tag" style="color:#fff">Beta</span></a></div><h3>On dark</h3><p class="muted small">Wordmark switches to white and the mark to the lighter indigo and green. Keep clear space equal to the mark's width.</p></div></div>
       <p class="small muted">Source: <code>C.logoMark()</code> in <code>js/main.js</code>; the favicon and app icon are <code>public/favicon.svg</code>. A G whose top is a dotted line, a solid curve, and a green closing bar: the dots are the practice run, the bar is the way in. The curve uses --color-primary (so it turns red in the recruiter theme) and the bar uses --color-success. On dark, use #5B5BD6 and #2FBF7A. The dots stay readable down to about 24px; below that, use the favicon tile. Do not stretch, outline or add effects. Concept sheet: <code>design/logo-samples.html</code>.</p>`;
 
     const colors = COLORS.map(([g, list]) => `<h3 class="sg-sub">${g}</h3><div class="sg-swatches">${list.map(([n, note]) => swatchRow(n, note)).join('')}</div>`).join('')
@@ -155,6 +155,7 @@
       <li>Record notable decisions in the log below, newest first.</li>
       <li>Keep one source of truth: if a value is written in two places, move it into a token.</li></ol>
       <h3 class="sg-sub">Change log</h3><ul class="sg-list">
+        <li><b>Beta tag and footer contact.</b> The logo carries a Beta tag on every page; the footer lists a contact email at the bottom right. Admin can delete ratings.</li>
         <li><b>Frankie and sub navigation.</b> The AI interviewer is named Frankie. Home, Value and Dashboard gain Interview and Presentation sub navigation, and the homepage covers both practice types.</li>
         <li><b>Renamed to Greenroom.</b> New G mark with dotted top and green bar, replacing the Caddie logo. The pre-session step is "Check camera and mic".</li>
         <li><b>First version.</b> Palette (indigo, petrol, deep red), recruiter theme, Bricolage Grotesque and Hanken Grotesk, core components, terminology and accessibility rules.</li></ul>`;
