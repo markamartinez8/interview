@@ -27,6 +27,7 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/js/voice.js`: Caddie's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
 - `public/js/views-recruiter.js`: Recruiter area (link on the homepage footer, no login yet): roles with status, job description, a default opening question plus up to 10 more (with suggestions from the job description), applicants, and per-role settings (camera required, minutes per question) that default to the recruiter's Profile and Settings. Uses a deep-red theme (`.theme-recruiter`).
 - `public/js/presentation.js`: Practice Presenting: a green room and a room where you see only yourself.
+- `#/styleguide` (in the running app): live style guide for colors, type, components and wording. Source: `public/js/views-styleguide.js`.
 - `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
 
 Login is intentionally skipped for now.

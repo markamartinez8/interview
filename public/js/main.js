@@ -1,13 +1,14 @@
 // Hash router, header and footer.
 (function (C) {
   const LOGO = '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" style="fill:var(--color-primary)"/><path d="M12 24V8l10 4.5L12 17" fill="#fff"/><circle cx="12" cy="24" r="2.2" fill="#2A9DA8"/></svg>';
+  C.LOGO = LOGO;
   const app = document.getElementById('app');
   let current = null;
 
   function header(route, minimal) {
     const inApp = route.startsWith('/app');
     if (route === '/admin') {
-      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Admin</span></a><nav class="nav" aria-label="Admin"><a href="#/">Back to Caddie</a></nav></div></header>`;
+      return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Admin</span></a><nav class="nav" aria-label="Admin"><a href="#/styleguide">Style guide</a><a href="#/">Back to Caddie</a></nav></div></header>`;
     }
     if (route.startsWith('/recruiter')) {
       return `<header class="site-header"><div class="container"><a class="logo" href="#/">${LOGO}Caddie <span class="badge" style="font-size:.7rem">Recruiter</span></a><nav class="nav" aria-label="Recruiter"><a href="#/recruiter" ${route === '/recruiter' ? 'aria-current="page"' : ''}>Roles</a><a href="#/recruiter/settings" ${route === '/recruiter/settings' ? 'aria-current="page"' : ''}>Profile and Settings</a><a class="btn btn-primary btn-sm" href="#/recruiter/new">Create new role</a></nav></div></header>`;
@@ -36,7 +37,7 @@
     if (current && current.destroy) { try { current.destroy(); } catch { /* ignore */ } }
     current = null;
     const publicPages = { '/': 'home', '/value': 'value', '/about': 'about', '/plans': 'plans' };
-    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings', '/admin': 'admin', '/recruiter': 'recruiter', '/recruiter/new': 'recruiterEdit', '/recruiter/settings': 'recruiterSettings', '/recruiter/edit': 'recruiterEdit' };
+    const appPages = { '/app': 'dashboard', '/app/setup': 'setup', '/app/interview': 'interview', '/app/present': 'presentation', '/app/settings': 'settings', '/admin': 'admin', '/styleguide': 'styleguide', '/recruiter': 'recruiter', '/recruiter/new': 'recruiterEdit', '/recruiter/settings': 'recruiterSettings', '/recruiter/edit': 'recruiterEdit' };
     let key = path;
     let params = rest;
     if (path === '/app/summary') { key = '/app/summary'; params = rest; }
