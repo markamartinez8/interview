@@ -53,21 +53,22 @@
     const profile = C.store.getProfile();
     const sessions = await C.store.listSessions();
     const qi = C.quick(sessions, 'interview'), qp = C.quick(sessions, 'presentation');
-    root.innerHTML = `<section class="container page">
+    root.innerHTML = `${V.subnav([['dash-interviews', 'Interviews'], ['dash-presentations', 'Presentations']])}<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Welcome back</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">${profile.name.trim() ? `${esc(profile.name.trim().split(/\s+/)[0])}'s Dashboard` : 'Your Dashboard'}</h1></div></div>
       <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">${sessions.length ? 'Ready for another round?' : 'Start your first session'}</h2><p>${sessions.length ? 'Practice makes perfect! Begin a new session.' : 'Practice an interview with Greenroom, or rehearse a talk and get feedback you can use right away.'}</p></div><a class="btn btn-lg" href="#/app/setup">Begin session</a></div>
       <div class="dash-cols">
-        <div class="stack"><h2 class="col-title">Interviews</h2>${sessionsTile(qi, 'interview')}${quickTile(qi, 'interview')}</div>
-        <div class="stack"><h2 class="col-title">Presentations</h2>${sessionsTile(qp, 'presentation')}${quickTile(qp, 'presentation')}</div>
+        <div class="stack" id="dash-interviews"><h2 class="col-title">Interviews</h2>${sessionsTile(qi, 'interview')}${quickTile(qi, 'interview')}</div>
+        <div class="stack" id="dash-presentations"><h2 class="col-title">Presentations</h2>${sessionsTile(qp, 'presentation')}${quickTile(qp, 'presentation')}</div>
       </div></section>`;
   };
 
   // ---------------- Setup ----------------
-  V.setup = async (root) => {
+  V.setup = async (root, params = []) => {
     const prefs = C.store.getPrefs(), profile = C.store.getProfile(), last = C.store.getLastSetup() || {};
     await C.ai.status();
     const S = { step: 1, agent: last.agent === 'present' ? 'present' : 'interview', title: last.title || '', aiQ: !!(prefs.aiConsent && C.ai.info.available), qSource: 'templates', source: last.source || 'ai', mode: last.mode || prefs.mode,
       jobName: last.jobName || profile.targetRole || '', jd: last.jd || '', custom: last.custom || '', questions: [] };
+    if (params[0] === 'present' || params[0] === 'interview') S.agent = params[0]; // deep link from the homepage
     const stepsOf = () => (S.agent === 'present' ? ['Choose', 'Presentation'] : ['Choose', 'Details', 'Review']);
     const frame = (inner) => `<section class="container page"><div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">New interview</span><h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Set up your interview</h1></div></div>
       <div class="wizard-steps">${stepsOf().map((n, i) => `<span class="chip ${i + 1 === S.step ? 'current' : ''}">${i + 1}. ${n}</span>`).join('')}</div><div class="card form-card">${inner}</div></section>`;
@@ -115,7 +116,7 @@
       if (S.step === 1) {
         const interview = S.agent === 'interview';
         root.innerHTML = frame(`<div class="stack" style="gap:1.4rem">
-          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', S.agent, 'Interview', 'The interviewer asks questions and listens while you answer.')}${radio('agent', 'present', S.agent, 'Practice Presenting', 'Greenroom listens to your presentation')}</div></div>
+          <div class="field"><span class="label">Practice agent</span><div class="seg">${radio('agent', 'interview', S.agent, 'Interview', 'Frankie asks questions and listens while you answer.')}${radio('agent', 'present', S.agent, 'Practice Presenting', 'Greenroom listens to your presentation')}</div></div>
           ${interview ? `<div class="field"><span class="label">Where should the questions come from?</span><div class="seg">${radio('source', 'ai', S.source, 'Dynamic questions', 'Built from the job title and, if you add one, the job description.')}${radio('source', 'static', S.source, 'Static questions', 'You enter the exact questions the interviewer asks.')}</div></div>
           <div class="field"><span class="label">Mode</span><div class="seg">${radio('mode', 'practice', S.mode, 'Practice', 'Live cues on the side. You can pause, skip and go back.')}${radio('mode', 'mock', S.mode, 'Mock', 'Like the real thing. No tips or pausing until the summary.')}</div></div>` : ''}
           <div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-primary" id="next">Next</button></div></div>`);
@@ -125,7 +126,7 @@
         $('#next').addEventListener('click', () => { S.step = 2; render(); });
       } else if (S.step === 2 && S.agent === 'present') {
         root.innerHTML = frame(`<div class="stack">
-          <div class="field"><label for="ptitle">Presentation name <span class="req">*</span></label><input type="text" id="ptitle" value="${esc(S.title)}" placeholder="e.g. Q4 results for the leadership team" maxlength="120"><span class="hint">You will see only yourself on screen. Greenroom listens and gives feedback afterward, but does not join or talk.</span></div>
+          <div class="field"><label for="ptitle">Presentation name <span class="req">*</span></label><input type="text" id="ptitle" value="${esc(S.title)}" placeholder="e.g. Q4 results for the leadership team" maxlength="120"><span class="hint">You will see only yourself on screen. Frankie listens and gives feedback afterward, but does not join or talk.</span></div>
           <div class="actions" style="margin-top:.5rem"><button class="btn btn-ghost" id="back">Back</button><button class="btn btn-primary" id="go" ${S.title.trim() ? '' : 'disabled'}>Check camera and mic</button></div></div>`);
         const t = $('#ptitle'), go = $('#go');
         t.addEventListener('input', () => { S.title = t.value; go.disabled = !t.value.trim(); });
@@ -141,10 +142,10 @@
           <div class="field"><label for="jd">Job description (optional)</label><textarea id="jd" style="min-height:190px" placeholder="Paste the whole posting here, including 'What you'll do' and 'What we're looking for'.">${esc(S.jd)}</textarea><span class="hint">Links to job posts cannot be read, so paste the text.</span></div>
           <div class="callout stack" style="gap:.6rem" id="jd-panel" aria-live="polite"><b>What Greenroom picked up</b><div class="stack" style="gap:.5rem" id="jd-body">${panelHTML()}</div></div>
           ${C.ai.info.available ? `<div class="callout"><label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-q" ${S.aiQ ? 'checked' : ''} style="margin-top:.25rem"><span><b>Use Claude (AI) to write my questions</b> for a deeper read of the posting<br><span class="small">${C.disclosure.questions}</span></span></label></div>` : C.ai.info.offline ? '<div class="callout small">Greenroom builds the questions from the job title and description.</div>' : '<div class="callout small">Questions are built by Greenroom from the job title and description. For a deeper read by Claude, add an Anthropic key in <a href="#/app/settings">Settings</a>.</div>'}
-          <p class="small muted">The interviewer always opens with "Walk me through your resume", then asks the 3 or 4 questions most relevant to the role.</p>
+          <p class="small muted">Frankie always opens with "Walk me through your resume", then asks the 3 or 4 questions most relevant to the role.</p>
           <div class="error-text" id="err" role="alert"></div>${buttons}</div>`
           : `<div class="stack">
-          <div class="field"><label for="qs">Your questions <span class="req">*</span></label><textarea id="qs" style="min-height:200px" placeholder="One question per line">${esc(S.custom)}</textarea><span class="hint">One per line. The interviewer always opens with "Walk me through your resume", then asks yours in order.</span></div>
+          <div class="field"><label for="qs">Your questions <span class="req">*</span></label><textarea id="qs" style="min-height:200px" placeholder="One question per line">${esc(S.custom)}</textarea><span class="hint">One per line. Frankie always opens with "Walk me through your resume", then asks yours in order.</span></div>
           <div class="field"><label for="jobc">Job title (optional)</label><input type="text" id="jobc" value="${esc(S.jobName)}"></div>
           ${buttons}</div>`);
         const preview = $('#preview'), go = $('#go');
@@ -231,7 +232,7 @@
     const caps = m.capabilities, pres = C.sessionKind(s) === 'presentation';
     const pq = m.perQuestion[0] || {};
     const transcriptCard = `<div class="card"><div class="card-title"><h3>Transcript</h3><span class="muted small">${pq.words || 0} words${pq.wpm ? ` · ${pq.wpm} wpm` : ''}${pq.eyePct != null ? ` · eye contact ${pq.eyePct}%` : ''}</span></div>${pq.answer ? `<blockquote style="margin:0;padding:.6rem .9rem;background:var(--color-cloud);border-left:3px solid var(--color-secondary-bright);border-radius:0 8px 8px 0;color:var(--text-muted);font-size:.94rem">${esc(pq.answer)}</blockquote>` : `<p class="muted">${caps.speech ? 'No speech was captured.' : 'No transcript. This browser has no speech recognition. Chrome or Edge work best.'}</p>`}</div>`;
-    const qaCard = `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Interviewer (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`;
+    const qaCard = `<div class="card"><div class="card-title"><h3>Questions and answers</h3>${chip(sc.qa)}</div>${m.perQuestion.map((q, i) => `<div class="qa"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b>${q.asked ? `<span class="muted small">${q.speakSec}s speaking${q.wpm ? ` · ${q.wpm} wpm` : ''}${q.eyePct != null ? ` · eye contact ${q.eyePct}%` : ''}</span>` : '<span class="chip na">Not asked</span>'}</div>${q.asked ? (C.qaParts(q).map((p) => `<blockquote>${p.who === 'caddie' ? '<b>Frankie (AI follow-up):</b> ' : ''}${esc(p.text)}</blockquote>`).join('') || `<blockquote>${caps.speech ? 'No speech was captured for this answer.' : 'No transcript. This browser has no speech recognition.'}</blockquote>`) : ''}</div>`).join('')}</div></div>`;
     const actionsCard = `<div class="card"><div class="card-title"><h3>Action items</h3></div><ol class="actions-list">${s.actions.length ? s.actions.map((a) => `<li>${esc(a.text)}</li>`).join('') : '<li>Not enough data was captured to suggest changes.</li>'}</ol></div>`;
     const nextCard = `<div class="card"><h3 style="margin-bottom:.6rem">What next?</h3><div class="stack" style="gap:.6rem"><button class="btn btn-primary" id="retry">Retry session</button><div id="retry-opts" class="row" hidden><button class="btn btn-ghost btn-sm" id="retry-same">${pres ? 'Same presentation' : 'Same questions'}</button><button class="btn btn-ghost btn-sm" id="retry-change">Change setup</button></div><a class="btn btn-ghost" href="#/app/setup">New session</a><a class="btn btn-ghost" href="#/app">End session</a></div></div>`;
     const note = '<p class="small muted">Scores are practice indicators from on-device analysis, not predictions of hiring or audience outcomes.</p>';
@@ -284,9 +285,9 @@
           <div class="field"><label for="p-email">Email</label><input type="email" id="p-email" value="${esc(profile.email)}"></div>
           <div class="field"><label for="p-role">Target role</label><input type="text" id="p-role" value="${esc(profile.targetRole)}" placeholder="Used to pre-fill new interviews"></div>
           <div class="field"><label for="p-mode">Default mode</label><select id="p-mode"><option value="practice" ${prefs.mode === 'practice' ? 'selected' : ''}>Practice</option><option value="mock" ${prefs.mode === 'mock' ? 'selected' : ''}>Mock</option></select></div>
-          <div class="field"><label for="p-sil">Seconds of silence before the interviewer moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
+          <div class="field"><label for="p-sil">Seconds of silence before Frankie moves on</label><input type="number" id="p-sil" min="3" max="15" value="${prefs.silenceSec}"></div>
           <div class="field"><label for="p-grace">Extra seconds to start your answer</label><input type="number" id="p-grace" min="0" max="30" value="${prefs.graceSec || 0}"><span class="hint">Added to the silence window only before you say your first word. 0 keeps it the same throughout.</span></div>
-          <div class="field"><label for="p-voice">Interviewer's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
+          <div class="field"><label for="p-voice">Frankie's voice</label><select id="p-voice"><option value="">Loading voices…</option></select><span class="hint">Voices come from your browser and device. Leave as is for the best available one.</span></div>
           <div class="field"><label for="p-speed">Speaking speed: <span id="p-speed-v">${(+prefs.voiceSpeed || 1).toFixed(2)}x</span></label><input type="range" id="p-speed" min="0.85" max="1.15" step="0.05" value="${+prefs.voiceSpeed || 1}"></div>
           <div class="row"><button class="btn btn-primary" type="submit">Save</button><button class="btn btn-ghost" type="button" id="p-test">Hear voice</button><span class="small muted" id="p-msg" role="status"></span></div></form>
         <div class="card"><div class="card-title"><h3>Session logs</h3><span class="muted small">${sessions.length} saved on this device</span></div>
@@ -318,7 +319,7 @@
     $('#p-test').addEventListener('click', async () => {
       C.voice.cancel(); C.voice.configure({ speed: +$('#p-speed').value });
       const v = voices.find((x) => x.voiceURI === $('#p-voice').value) || voices[0] || null;
-      await C.voice.speak("Hi, I'm your AI interviewer. Thanks for joining me today. Let's start with your background.", v, null);
+      await C.voice.speak("Hi, I'm Frankie, your AI interviewer. Thanks for joining me today. Let's start with your background.", v, null);
     });
     root.addEventListener('click', async (e) => {
       const rec = e.target.closest('[data-rec]'), tr = e.target.closest('[data-tr]'), del = e.target.closest('[data-del]');

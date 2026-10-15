@@ -46,7 +46,8 @@
   ];
 
   const TERMS = [
-    ['Greenroom', 'The product name. One word, no "The". The interviewer inside it is unnamed: say "the interviewer" or "your AI interviewer".', 'Never "Caddie" or "Andy".'],
+    ['Greenroom', 'The product name. One word, no "The".', 'Never "Caddie".'],
+    ['Frankie', 'The AI interviewer. First name only, always capitalised. Frankie asks the questions, speaks the follow-ups and, in presentations, listens and gives feedback afterward.', 'Frankie asks follow-up questions. Never "Andy" or "Caddie".'],
     ['Begin session', 'Starts a new interview or presentation from the header or dashboard.', 'Not "Begin interview" or "Start new interview".'],
     ['Check camera and mic', 'Moves from setup to the camera and microphone check. The page eyebrow reads "Before you start".', ''],
     ['Join', 'Leaves the camera and mic check and starts the 3-second countdown.', ''],
@@ -61,7 +62,7 @@
 
   const RULES = [
     'Sentences are short and plain. Say what will happen before it happens.',
-    'The interviewer speaks in first person only inside the session. Elsewhere the app says "Greenroom" or "we" sparingly.',
+    'Frankie speaks in first person only inside the session. Elsewhere the app says "Greenroom", "Frankie" or "we" sparingly.',
     'Sentence case for buttons, headings and labels. No exclamation marks.',
     'Never claim more than the app does: sessions stay in the browser, video and audio are never uploaded, and AI features are opt-in and disclosed.',
     'Scores come with a reason or a tip, never a number alone.',
@@ -138,6 +139,8 @@
         <div class="stack"><div class="callout">Callout: helpful information.</div><div class="callout warn">Callout (warn): something needs attention but is not blocking.</div></div></div>
       <h3 class="sg-sub">Empty state</h3><div class="empty"><strong>No sessions yet</strong><p>Say what is missing and offer one next step.</p></div>
       <h3 class="sg-sub">Stat tile</h3><div class="card flat stat-row"><div class="stat"><span class="stat-label">Users</span><span class="stat-value">128</span><span class="stat-sub">Unique people</span></div><div class="stat"><span class="stat-label">Average rating</span><span class="stat-value">4.6<small> / 5</small></span><span class="stat-sub">From 32 ratings</span></div></div>
+      <h3 class="sg-sub">Sub navigation</h3><div class="card flat"><nav class="subnav" style="position:static;border:0;background:none" aria-label="Example"><div class="subnav-in" style="padding:0"><a href="#/styleguide" aria-current="true">Interview</a><a href="#/styleguide">Presentation</a><a href="#/styleguide">What we measure</a></div></nav></div>
+      <p class="small muted">Sticky pill tabs under the header that scroll to sections of the same page. Use <code>V.subnav([[id, label], ...])</code> from <code>js/views-public.js</code> whenever a page has distinct Interview and Presentation sections (home, value, dashboard). Section ids must be unique on the page.</p>
       <h3 class="sg-sub">Toast</h3><div class="card flat"><button class="btn btn-ghost btn-sm" id="sg-toast">Show a toast</button> <span class="small muted">Short confirmations that disappear on their own.</span></div>
       <p class="small muted" style="margin-top:.8rem">Other patterns to reuse rather than reinvent: the dark interview room and tiles (<code>.room</code>, <code>.preview</code>), the 3-second countdown, the rating dialog (<code>.modal-wrap</code>), Quick Summary KPI rows with sparklines (<code>.kpi</code>), and the wizard step chips (<code>.wizard-steps</code>).</p>`;
 
@@ -152,7 +155,8 @@
       <li>Record notable decisions in the log below, newest first.</li>
       <li>Keep one source of truth: if a value is written in two places, move it into a token.</li></ol>
       <h3 class="sg-sub">Change log</h3><ul class="sg-list">
-        <li><b>Renamed to Greenroom.</b> New G mark with dotted top and green bar, replacing the Caddie logo. The interviewer is now unnamed, and the pre-session step is "Check camera and mic".</li>
+        <li><b>Frankie and sub navigation.</b> The AI interviewer is named Frankie. Home, Value and Dashboard gain Interview and Presentation sub navigation, and the homepage covers both practice types.</li>
+        <li><b>Renamed to Greenroom.</b> New G mark with dotted top and green bar, replacing the Caddie logo. The pre-session step is "Check camera and mic".</li>
         <li><b>First version.</b> Palette (indigo, petrol, deep red), recruiter theme, Bricolage Grotesque and Hanken Grotesk, core components, terminology and accessibility rules.</li></ul>`;
 
     view.innerHTML = `<section class="container page sg">

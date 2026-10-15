@@ -1,6 +1,6 @@
 # Greenroom
 
-Practice interviews with Greenroom, a virtual interviewer, and get feedback on speech, eye contact and posture.
+Practice interviews and presentations with Greenroom, and get feedback on speech, eye contact and posture. Frankie is your AI interviewer.
 Everything runs in the browser. Sessions, transcripts and recordings are stored on the user's device only.
 
 ## Run it
@@ -23,8 +23,8 @@ Open it in Chrome or Edge (best support for camera, microphone and speech recogn
 - `public/js/summary.js`: scoring, action items, downloadable reports.
 - `public/js/jd.js`: reads a pasted job description (responsibilities, requirements, skills, seniority, years).
 - `public/js/questions.js`: picks the 3 to 4 most relevant questions; "Walk me through your resume" is always first.
-- `public/js/avatar.js`: The interviewer's animated face (lip-sync, blinks, gaze, nods).
-- `public/js/voice.js`: Interviewer's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
+- `public/js/avatar.js`: Frankie's animated face (lip-sync, blinks, gaze, nods).
+- `public/js/voice.js`: Frankie's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
 - `public/js/views-recruiter.js`: Recruiter area (link on the homepage footer, no login yet): roles with status, job description, a default opening question plus up to 10 more (with suggestions from the job description), applicants, and per-role settings (camera required, minutes per question) that default to the recruiter's Profile and Settings. Uses a deep-red theme (`.theme-recruiter`).
 - `public/js/presentation.js`: Practice Presenting: a camera check and a room where you see only yourself.
 - `#/styleguide` (in the running app): live style guide for colors, type, components and wording. Source: `public/js/views-styleguide.js`.

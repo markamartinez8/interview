@@ -1,4 +1,4 @@
-// Practice Presenting: camera check and a room where you see only yourself. There is no interviewer in the room; Greenroom listens and gives feedback afterward.
+// Practice Presenting: camera check and a room where you see only yourself. Frankie is not in the room; it listens and gives feedback afterward.
 (function (C) {
   const { esc, fmtDur, uid } = C.util;
   const statusChip = (text, cls) => `<span class="chip ${cls}">${esc(text)}</span>`;

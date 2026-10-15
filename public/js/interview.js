@@ -23,10 +23,10 @@
         <div class="stack">
           <div class="card"><h3 style="margin-bottom:.7rem">Your session</h3><dl class="kv">
             ${setup.applicantName ? `<dt>Applicant</dt><dd>${esc(setup.applicantName)}</dd>` : ''}<dt>Role</dt><dd>${esc(setup.jobName || 'Custom questions')}</dd><dt>Mode</dt><dd>${setup.mode === 'practice' ? 'Practice (live tips, pause and skip)' : 'Mock (tips after the interview)'}</dd>
-            <dt>Questions</dt><dd>${questions.length}</dd>${setup.cameraRequired ? '<dt>Camera</dt><dd>Required</dd>' : ''}${setup.minutesPerQuestion ? `<dt>Time per question</dt><dd>${setup.minutesPerQuestion} min</dd>` : ''}<dt>Interviewer moves on after</dt><dd>${prefs.silenceSec} seconds of silence</dd></dl></div>
+            <dt>Questions</dt><dd>${questions.length}</dd>${setup.cameraRequired ? '<dt>Camera</dt><dd>Required</dd>' : ''}${setup.minutesPerQuestion ? `<dt>Time per question</dt><dd>${setup.minutesPerQuestion} min</dd>` : ''}<dt>Frankie moves on after</dt><dd>${prefs.silenceSec} seconds of silence</dd></dl></div>
           <div class="card"><h3 style="margin-bottom:.7rem">Ready check</h3><ul class="checklist">
             <li><span>Camera</span><span id="ck-cam">${statusChip('Waiting', 'na')}</span></li><li><span>Microphone</span><span id="ck-mic">${statusChip('Waiting', 'na')}</span></li>
-            <li><span>Interviewer's voice</span><span id="ck-voice">${statusChip('Loading', 'na')}</span></li><li><span>Face and posture analysis</span><span id="ck-vis">${statusChip('Waiting', 'na')}</span></li>
+            <li><span>Frankie's voice</span><span id="ck-voice">${statusChip('Loading', 'na')}</span></li><li><span>Face and posture analysis</span><span id="ck-vis">${statusChip('Waiting', 'na')}</span></li>
             <li><span>Speech transcript</span><span id="ck-sr">${statusChip(window.SpeechRecognition || window.webkitSpeechRecognition ? 'Supported' : 'Not in this browser', window.SpeechRecognition || window.webkitSpeechRecognition ? 'good' : 'low')}</span></li></ul></div>
           <div class="card stack" id="ai-card" hidden></div>
           <div class="card stack"><p class="small muted">Your video is recorded on this device only so you can review it afterward. Nothing is uploaded.</p><div id="prep-err" class="error-text" role="alert"></div>
@@ -71,10 +71,10 @@
       const card = $('#ai-card'); if (!card || setup.source !== 'ai') return;
       card.hidden = false;
       if (info.available) {
-        card.innerHTML = `<label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-fu" ${C.store.getPrefs().aiConsent ? 'checked' : ''} style="margin-top:.25rem"><span><b>Let the interviewer ask AI follow-up questions</b><br><span class="small muted">${C.disclosure.followups}</span></span></label>`;
+        card.innerHTML = `<label class="row" style="gap:.5rem;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ai-fu" ${C.store.getPrefs().aiConsent ? 'checked' : ''} style="margin-top:.25rem"><span><b>Let Frankie ask AI follow-up questions</b><br><span class="small muted">${C.disclosure.followups}</span></span></label>`;
         $('#ai-fu').addEventListener('change', (e) => C.store.setPrefs({ ...C.store.getPrefs(), aiConsent: e.target.checked }));
       } else if (info.offline) card.hidden = true;
-      else card.innerHTML = '<p class="small muted"><b>AI follow-ups are off.</b> The interviewer will ask only the questions on your list. To turn them on, add an Anthropic key in <a href="#/app/settings">Settings</a>.</p>';
+      else card.innerHTML = '<p class="small muted"><b>AI follow-ups are off.</b> Frankie will ask only the questions on your list. To turn them on, add an Anthropic key in <a href="#/app/settings">Settings</a>.</p>';
     });
     requestMedia();
     $('#join').addEventListener('click', () => { if (S.started || S.cancelCd) return; $('#join').disabled = true; S.cancelCd = C.util.countdown(3, () => { S.cancelCd = null; enterRoom(); }, () => { S.cancelCd = null; updateJoin(); }); });
@@ -90,7 +90,7 @@
         <div class="room-top"><div class="row"><span class="badge">${esc(setup.jobName || 'Custom questions')}</span><span class="badge">${practice ? 'Practice' : 'Mock'}</span><span class="small" id="progress">Getting started</span><span class="small" id="qtime" aria-live="off"></span></div>
           <div class="row"><span class="small" id="timer">0:00</span><span class="rec" id="rec" ${S.stream ? '' : 'hidden'}>REC</span></div></div>
         <div class="room-main"><div>
-          <div class="tiles"><div class="tile caddie"><svg id="caddie" role="img" aria-label="Your AI interviewer"></svg><span class="tag">AI interviewer</span></div>
+          <div class="tiles"><div class="tile caddie"><svg id="caddie" role="img" aria-label="Frankie, your AI interviewer"></svg><span class="tag">Frankie · AI interviewer</span></div>
             <div class="tile"><video id="me" autoplay muted playsinline></video><div class="novideo" id="novid" hidden>${S.textOnly ? 'Camera and mic are off. Type your answers in the chat.' : 'No camera. Audio only.'}</div><span class="tag">You</span></div></div>
           <p class="caption" id="caption" aria-live="polite"></p><div class="silence" aria-hidden="true"><div id="silbar"></div></div><div class="status-line" id="status"></div>
           <div class="controls">
@@ -228,7 +228,7 @@
       const q = S.analyzer.q[i]; if (!q) return null;
       const answer = `${q.text} ${q.typed}`.trim();
       if (answer.split(/\s+/).length < 12) return null;
-      $('#status').textContent = 'The interviewer is thinking…'; S.avatar && S.avatar.setThinking(true);
+      $('#status').textContent = 'Frankie is thinking…'; S.avatar && S.avatar.setThinking(true);
       const history = questions.slice(0, i).map((qq, j) => { const p = S.analyzer.q[j]; return p ? { question: qq.text, answer: `${p.text} ${p.typed}`.trim(), followUp: (p.segments || []).map((s) => s.followUp).join(' ') } : null; }).filter((h) => h && h.answer);
       const f = await C.ai.followUp({ role: setup.jobName, jd: setup.jd, history, current: { question: questions[i].text, answer } });
       S.avatar && S.avatar.setThinking(false);
@@ -241,7 +241,7 @@
       const role = setup.jobName ? ` about the ${setup.jobName} position` : '';
       const how = S.textOnly ? 'Type your answer in the chat, then press Next question.' : `When you have been quiet for about ${prefs.silenceSec} seconds, I will move on.`;
       const modeLine = practice ? 'This is practice mode, so you will see live tips on the side, and you can pause or skip.' : 'This is a mock interview, so no tips until the end.';
-      return `Hi, I am your AI interviewer. Thanks for joining me today. I will ask you ${questions.length} questions${role}${S.useFollowups ? ', and maybe a follow-up or two' : ''}. ${modeLine} ${how} Let's get started.`;
+      return `Hi, I am Frankie, your AI interviewer. Thanks for joining me today. I will ask you ${questions.length} questions${role}${S.useFollowups ? ', and maybe a follow-up or two' : ''}. ${modeLine} ${how} Let's get started.`;
     };
     async function runInterview(run, practice) {
       await say(introText());
@@ -252,7 +252,7 @@
         if (run !== S.run) return;
         while (S.paused && run === S.run) await sleep(150);
         if (run !== S.run) return;
-        if (S.nav === 'end') break; // End pressed while the interviewer was still talking
+        if (S.nav === 'end') break; // End pressed while Frankie was still talking
         S.nav = null; S.done = false; S.qi = i;
         $('#progress').textContent = `Question ${i + 1} of ${questions.length}`; $('#status').textContent = '';
         const lead = fresh && i > 0 ? transitions[i % transitions.length] + ' ' : '';

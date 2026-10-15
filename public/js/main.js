@@ -33,6 +33,28 @@
     if (!seen) C.analytics.track('visit');
   }
 
+  // Sub navigation: smooth-scroll to a section on the current page and highlight the section in view.
+  let unwire = null;
+  function wireSubnav(view) {
+    if (unwire) { unwire(); unwire = null; }
+    const links = [...view.querySelectorAll('.subnav a[data-jump]')];
+    if (!links.length) return;
+    const targets = links.map((a) => document.getElementById(a.dataset.jump));
+    const mark = () => {
+      const line = window.innerHeight * 0.3; let active = -1;
+      targets.forEach((t, i) => { if (t && t.getBoundingClientRect().top <= line) active = i; });
+      links.forEach((a, i) => { if (i === active) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+    };
+    const click = (e) => {
+      const a = e.target.closest('a[data-jump]'); if (!a) return;
+      e.preventDefault();
+      const t = document.getElementById(a.dataset.jump);
+      if (t) t.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    };
+    view.addEventListener('click', click); window.addEventListener('scroll', mark, { passive: true }); mark();
+    unwire = () => { view.removeEventListener('click', click); window.removeEventListener('scroll', mark); };
+  }
+
   async function route() {
     trackVisit();
     const hash = location.hash.replace(/^#/, '') || '/';
@@ -54,10 +76,11 @@
       if (key === '/') { let seen = false; try { seen = sessionStorage.getItem('caddie.hv') === '1'; sessionStorage.setItem('caddie.hv', '1'); } catch { /* blocked */ } if (!seen) C.analytics.track('home_view'); }
       const hero = view.querySelector('#hero-avatar');
       if (hero) { const av = new C.Avatar(hero); av.setListening(true); current = { destroy: () => av.destroy() }; }
+      wireSubnav(view);
       return;
     }
     const name = key === '/app/summary' ? 'summary' : appPages[key];
-    if (name) { current = (await C.views[name](view, params)) || null; return; }
+    if (name) { current = (await C.views[name](view, params)) || null; wireSubnav(view); return; }
     view.innerHTML = '<section class="container page"><div class="empty"><strong>Page not found</strong><p style="margin-top:1rem"><a class="btn btn-primary" href="#/">Go home</a></p></div></section>';
   }
   window.addEventListener('hashchange', route);

@@ -396,3 +396,15 @@ table.logs th { color: var(--text-muted); font-size: .78rem; text-transform: upp
 .sg-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .5rem; }
 code { font-size: .88em; background: var(--color-primary-tint); padding: .08rem .35rem; border-radius: 5px; }
 @media (max-width: 480px) { .sg-swatches { grid-template-columns: 1fr; } }
+
+/* Sub navigation: sticky tabs that jump between sections of a page */
+.subnav { position: sticky; top: 65px; z-index: 15; background: rgba(255, 255, 255, .94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border-default); }
+.subnav-in { display: flex; gap: .25rem; overflow-x: auto; padding-block: .35rem; scrollbar-width: none; }
+.subnav a { flex: none; text-decoration: none; font-weight: 650; font-size: .9rem; padding: .4rem .9rem; border-radius: 999px; color: var(--text-muted); }
+.subnav a:hover { color: var(--text-default); background: var(--color-primary-tint); }
+.subnav a[aria-current] { color: var(--color-primary); background: var(--color-primary-tint); }
+[id] { scroll-margin-top: 120px; }
+.split { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+.steps.one { grid-template-columns: 1fr; }
+.mock-tiles.one { grid-template-columns: 1fr; }
+@media (max-width: 800px) { .split { grid-template-columns: 1fr; } }

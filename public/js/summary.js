@@ -96,7 +96,7 @@
     };
   };
 
-  // Answer text in order, including any AI follow-ups the interviewer asked.
+  // Answer text in order, including any AI follow-ups Frankie asked.
   C.qaParts = function (q) {
     const parts = [];
     if (q.segments && q.segments.length) {
@@ -124,10 +124,10 @@
     }
     const lines = [`Greenroom interview transcript`, `Role: ${s.setup.jobName || 'Custom questions'}`, `Date: ${fmtDate(s.createdAt)}`, `Mode: ${s.setup.mode === 'practice' ? 'Practice' : 'Mock'}`, ''];
     s.metrics.perQuestion.forEach((q, i) => {
-      lines.push(`Q${i + 1} Interviewer: ${q.text}`);
+      lines.push(`Q${i + 1} Frankie: ${q.text}`);
       if (q.asked) {
         const parts = C.qaParts(q);
-        parts.forEach((p) => lines.push(p.who === 'caddie' ? `Interviewer (AI follow-up): ${p.text}` : `You${p.typed ? ' (typed)' : ''}: ${p.text}`));
+        parts.forEach((p) => lines.push(p.who === 'caddie' ? `Frankie (AI follow-up): ${p.text}` : `You${p.typed ? ' (typed)' : ''}: ${p.text}`));
         if (!parts.length) lines.push('You: (no transcript captured)');
       } else lines.push('(not asked)');
       lines.push('');

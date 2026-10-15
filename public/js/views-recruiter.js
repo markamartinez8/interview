@@ -45,10 +45,10 @@
     };
     root.innerHTML = `<section class="container page">
       <div class="page-head"><div class="stack" style="gap:.3rem"><span class="eyebrow">Greenroom for Recruiters</span><h1 style="font-size:clamp(1.8rem,3.6vw,2.6rem)">Recruiter Dashboard</h1></div></div>
-      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">Create a new job or role</h2><p>Add the role, the job description, the questions the interviewer asks and your applicants.</p></div><a class="btn btn-lg" href="#/recruiter/new">Create new role</a></div>
+      <div class="card cta-card"><div class="stack" style="gap:.4rem"><h2 style="font-size:1.5rem">Create a new job or role</h2><p>Add the role, the job description, the questions Frankie asks and your applicants.</p></div><a class="btn btn-lg" href="#/recruiter/new">Create new role</a></div>
       <div class="page-head" style="margin-bottom:.8rem"><h2 class="col-title" style="flex:1">Roles</h2></div>
       ${roles.length ? `<div class="roles">${roles.map(card).join('')}</div><p class="small muted" style="margin-top:1rem">Roles are saved in this browser. Start interview runs the interview for that applicant on this computer and marks them completed when they finish.</p>`
-        : '<div class="empty"><strong>No roles yet</strong>Create your first role to set the questions the interviewer asks.</div>'}</section>`;
+        : '<div class="empty"><strong>No roles yet</strong>Create your first role to set the questions Frankie asks.</div>'}</section>`;
     root.onclick = (e) => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.dataset.preview) { const r = C.store.getRole(b.dataset.preview); if (r) startInterview(r, null); }
@@ -116,7 +116,7 @@
           <div class="grid2"><div class="field"><label for="r-title">Role title <span class="req">*</span></label><input type="text" id="r-title" value="${esc(S.title)}" placeholder="e.g. Senior Backend Engineer" maxlength="120"></div>
             <div class="field"><label for="r-status">Status</label><select id="r-status">${STATUSES.map(([k, n]) => `<option value="${k}" ${k === S.status ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>
           <div class="field"><label for="r-jd">Job description</label><textarea id="r-jd" style="min-height:200px" placeholder="Paste the full job description here">${esc(S.jd)}</textarea><span class="hint" id="jd-note" aria-live="polite">${esc(jdNote())}</span></div></div>
-        <div class="card stack"><div class="row" style="justify-content:space-between"><h3>Questions for the interviewer to ask</h3><span class="chip" id="q-count"></span></div>
+        <div class="card stack"><div class="row" style="justify-content:space-between"><h3>Questions for Frankie to ask</h3><span class="chip" id="q-count"></span></div>
           <span class="hint">Every interview starts with the default question. Add up to ${MAX_Q} more of your own.</span>
           <div class="q-editor" id="qs"></div><div><button type="button" class="btn btn-ghost btn-sm" id="q-add">Add a question</button></div>
           <div class="sugg-wrap"><h3 style="font-size:1rem">Suggested questions</h3><span class="hint">Based on the job description. Add the ones you like, or ignore them.</span><div id="sugg" class="stack" style="gap:.6rem;margin-top:.6rem"></div></div></div>

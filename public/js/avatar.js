@@ -1,4 +1,4 @@
-// An animated interviewer, plus one consistent browser voice.
+// Frankie: an animated interviewer, plus one consistent browser voice.
 // The face is drawn as layered, shaded SVG and driven by a small behaviour model:
 // lip-sync from the spoken text, blinks, eye movement, brow and head motion, listening nods,
 // and gaze that follows where the candidate sits in their camera frame.
