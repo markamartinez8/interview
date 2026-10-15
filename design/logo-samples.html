@@ -1,43 +1,40 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Logo samples: The Greenroom</title>
+<title>The Greenroom: logo</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,750&family=Hanken+Grotesk:wght@400;600&display=swap">
 <style>
-:root{--primary:#3730A3;--primary-bright:#5B5BD6;--tint:#ECECFB;--petrol:#0F4C5C;--petrol-bright:#2A9DA8;--ink:#14171F;--slate:#4A5261;--mist:#E6E8EC;--cloud:#F7F8FA;--green:#1E8E5A;--green-bright:#2FBF7A;--room:#10131C}
-*{box-sizing:border-box}body{margin:0;font:16px/1.5 "Hanken Grotesk",system-ui,sans-serif;background:var(--cloud);color:var(--ink);padding:clamp(16px,4vw,40px)}
+:root{--primary:#3730A3;--primary-bright:#5B5BD6;--ink:#14171F;--slate:#4A5261;--mist:#E6E8EC;--cloud:#F7F8FA;--room:#10131C}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 "Hanken Grotesk",system-ui,sans-serif;background:var(--cloud);color:var(--ink);padding:clamp(16px,4vw,40px);max-width:1100px;margin-inline:auto}
 h1,h2,.word{font-family:"Bricolage Grotesque","Segoe UI",sans-serif;letter-spacing:-.02em}
-h1{margin:0 0 .3rem;font-size:2.2rem}h2{margin:2.4rem 0 .3rem;font-size:1.6rem}.lede{color:var(--slate);max-width:62ch;margin:0}
+h1{margin:0 0 .3rem;font-size:2.2rem}h2{margin:2.2rem 0 .3rem;font-size:1.4rem}.lede,.note{color:var(--slate);max-width:64ch;margin:0}.note{font-size:.9rem;margin-top:.6rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem}
-.opt{background:#fff;border:1px solid var(--mist);border-radius:16px;overflow:hidden}
-.opt h3{margin:0;padding:.9rem 1rem .2rem;font-size:1rem}.opt p{margin:0;padding:0 1rem .9rem;color:var(--slate);font-size:.88rem}
-.pane{display:flex;align-items:center;gap:.6rem;padding:1.2rem 1rem}.pane.dark{background:var(--room)}.pane.dark .word{color:#fff}
-.pane svg{width:48px;height:48px;flex:none}.word{font-weight:750;font-size:1.7rem;line-height:1}.word i{font-style:normal;font-weight:500;font-size:.62em;opacity:.7;margin-right:.28em;letter-spacing:0}.stack{flex-direction:column;gap:.5rem;text-align:center}.stack .word{display:flex;flex-direction:column;align-items:center;gap:.15rem}.stack .word i{margin:0;font-size:.5em;letter-spacing:.14em;text-transform:uppercase}.pane.stack svg{width:56px;height:56px}
-.pane.icon{justify-content:center;gap:1rem}.pane.icon svg{width:64px;height:64px}.pane.icon svg.s{width:24px;height:24px}.pane.icon svg.m{width:40px;height:40px}
+.card{background:#fff;border:1px solid var(--mist);border-radius:16px;overflow:hidden}.card h3{margin:0;padding:.9rem 1rem 0;font-size:1rem}.card p{margin:0;padding:.1rem 1rem .8rem;color:var(--slate);font-size:.88rem}
+.pane{display:flex;align-items:center;justify-content:center;gap:.7rem;padding:1.6rem 1rem}.pane.dark{background:var(--room);color:#fff}
+.pane svg{width:56px;height:56px;flex:none}.word{font-weight:750;font-size:2rem;line-height:1}.word i{font-style:normal;font-weight:500;font-size:.62em;opacity:.7;margin-right:.28em;letter-spacing:0}
+.stack{flex-direction:column;gap:.5rem}.stack svg{width:84px;height:84px}.stack .word{display:flex;flex-direction:column;align-items:center;gap:.2rem}.stack .word i{margin:0;font-size:.45em;letter-spacing:.16em;text-transform:uppercase}
+.sizes{align-items:flex-end;gap:1.4rem}.sizes svg{width:auto}.tile{background:var(--primary);border-radius:22%;display:flex;align-items:center;justify-content:center}
+.tile.sq svg{width:64%;height:64%}
 </style></head><body>
-<h1>The Greenroom: logo samples</h1><p class="lede">Three directions for <b>The Greenroom</b>, using the Caddie palette plus the app's success green. Each card shows a horizontal lockup on light and dark, a stacked lockup, and the icon at three sizes. The name is set with a lighter, smaller "The" so "Greenroom" carries the brand.</p>
-<div id="root"></div>
+<h1>The Greenroom: logo</h1>
+<p class="lede">Direction C, refined. The top of the G is a dotted indigo line, the rest of the curve is solid indigo, and the closing bar is green.</p>
+<div class="grid" id="main"></div>
+<h2>Small sizes and app icon</h2>
+<div class="grid" id="small"></div>
+<p class="note">Colors: indigo #3730A3 (#5B5BD6 on dark), green #1E8E5A (#2FBF7A on dark). Both come from the app palette. The earlier "on-air" dot was removed because the green bar now carries that accent.</p>
 <script>
-const M = {
- gr: [
-  ['A. Doorway','An arched door with a light glowing: the room you step into before you go on.',
-   `<path d="M12 56V26a20 20 0 0 1 40 0v30z" fill="#3730A3"/><circle cx="32" cy="32" r="12" fill="#2FBF7A" opacity=".22"/><circle cx="32" cy="32" r="6" fill="#2FBF7A"/><rect x="8" y="56" width="48" height="4" rx="2" fill="#14171F"/>`,
-   `<path d="M12 56V26a20 20 0 0 1 40 0v30z" fill="#5B5BD6"/><circle cx="32" cy="32" r="12" fill="#2FBF7A" opacity=".25"/><circle cx="32" cy="32" r="6" fill="#2FBF7A"/><rect x="8" y="56" width="48" height="4" rx="2" fill="#E8EAF3"/>`, 'Greenroom'],
-  ['B. Spotlight','A cone of light on a figure: you, ready and in focus.',
-   `<circle cx="32" cy="32" r="30" fill="#3730A3"/><path d="M32 6 L14 54 H50 Z" fill="#fff" opacity=".22"/><circle cx="32" cy="36" r="6" fill="#2FBF7A"/><path d="M21 54a11 11 0 0 1 22 0z" fill="#2FBF7A"/>`,
-   `<circle cx="32" cy="32" r="30" fill="#5B5BD6"/><path d="M32 6 L14 54 H50 Z" fill="#fff" opacity=".22"/><circle cx="32" cy="36" r="6" fill="#2FBF7A"/><path d="M21 54a11 11 0 0 1 22 0z" fill="#2FBF7A"/>`, 'Greenroom'],
-  ['C. G with on-air dot','A rounded G monogram with the green "ready" light, simple enough for an app icon.',
-   `<path d="M47 20A18 18 0 1 0 50 34H35" fill="none" stroke="#3730A3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="14" r="5" fill="#2FBF7A"/>`,
-   `<path d="M47 20A18 18 0 1 0 50 34H35" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="14" r="5" fill="#2FBF7A"/>`, 'Greenroom']
- ],
- };
-const svg = (b, cls='') => `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true">${b}</svg>`;
+// Geometry: circle centre (32.35, 30.46), radius 18. Dotted arc covers the top (from 36 degrees above the right to 30 degrees past the top on the left).
+const mark = (p, g, bg) => `${bg || ''}<path d="M47 20A18 18 0 0 0 16.76 21.46" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.01 11.93"/>
+<path d="M16.76 21.46A18 18 0 1 0 50 34" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round"/>
+<path d="M50 34H35" fill="none" stroke="${g}" stroke-width="8" stroke-linecap="round"/>`;
+const L = ['#3730A3', '#1E8E5A'], D = ['#5B5BD6', '#2FBF7A'], W = ['#fff', '#2FBF7A'];
+const svg = (inner, style = '') => `<svg viewBox="0 0 64 64" aria-hidden="true" style="${style}">${inner}</svg>`;
 const word = '<span class="word"><i>The</i>Greenroom</span>';
-function sect(title, note, list){
-  return `<h2>${title}</h2><p class="lede">${note}</p><div class="grid">${list.map(([n,d,l,k])=>`<div class="opt"><h3>${n}</h3><p>${d}</p>
-  <div class="pane">${svg(l)}${word}</div>
-  <div class="pane dark">${svg(k)}${word}</div>
-  <div class="pane stack">${svg(l)}${word}</div>
-  <div class="pane icon">${svg(l)}${svg(l,'m')}${svg(l,'s')}</div></div>`).join('')}</div>`;
-}
-document.getElementById('root').innerHTML = sect('Directions','Green is the one new color, borrowed from the app\'s success green. Theme: the calm space before you go on stage.', M.gr);
+document.getElementById('main').innerHTML = `
+ <div class="card"><h3>Horizontal, light</h3><p>Primary lockup for the app header and website.</p><div class="pane">${svg(mark(...L))}${word}</div></div>
+ <div class="card"><h3>Horizontal, dark</h3><p>For the interview room and dark surfaces.</p><div class="pane dark">${svg(mark(...D))}${word}</div></div>
+ <div class="card"><h3>Stacked</h3><p>For square spaces, social and splash screens.</p><div class="pane stack">${svg(mark(...L))}${word}</div></div>`;
+const tile = (s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(mark(...W), 'width:68%;height:68%')}</div>`;
+document.getElementById('small').innerHTML = `
+ <div class="card"><h3>Mark at 64, 40, 24 and 16 px</h3><p>The dots stay readable down to about 24px. Below that, use the app icon version.</p><div class="pane sizes">${svg(mark(...L), 'width:64px;height:64px')}${svg(mark(...L), 'width:40px;height:40px')}${svg(mark(...L), 'width:24px;height:24px')}${svg(mark(...L), 'width:16px;height:16px')}</div></div>
+ <div class="card"><h3>App icon / favicon</h3><p>Indigo tile with a white G and green bar.</p><div class="pane sizes">${tile(96)}${tile(48)}${tile(32)}${tile(16)}</div></div>`;
 </script></body></html>
