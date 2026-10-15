@@ -72,3 +72,18 @@ Run `npm start` on a host that runs Node. Set these environment variables:
 - `PORT` is usually provided by the host.
 
 Build command: `npm install`. Start command: `npm start`. Camera access needs https, which hosting platforms provide.
+
+## Deploy on Railway
+
+`railway.json` tells Railway how to start the app. You still create the project in Railway yourself (menu names may differ slightly from these steps).
+
+1. In Railway, choose **New Project**, then **Deploy from GitHub repo**, and pick this repository and the branch you want live.
+2. Open the service's **Variables** tab and add:
+   - `CADDIE_PUBLIC` = `1`
+   - `CADDIE_ADMIN_PASSWORD` = a strong password of your own (the default is `test`; never leave it on a public site)
+   - `CADDIE_DATA_DIR` = `/data`
+3. Add a **Volume** to the service and mount it at `/data`. Without it, ratings and analytics are lost on every restart or redeploy.
+4. Under **Settings, Networking**, choose **Generate Domain**. That `https://…up.railway.app` link is the shareable app, and camera and microphone work because it is https.
+5. Visit the link, open the footer's **Admin** link on the homepage, and sign in with username `caddie` and your password.
+
+Railway sets `PORT` itself. AI features stay local-only on a public host (they never run for visitors), so there is no need to add an Anthropic key.

@@ -13,6 +13,6 @@
     "@mediapipe/tasks-vision": "^0.10.14"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
