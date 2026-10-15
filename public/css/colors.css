@@ -1,0 +1,75 @@
+/* AI HR tech palette: indigo primary, petrol secondary, deep red tertiary */
+
+:root {
+  /* Primary: indigo */
+  --color-primary: #3730A3;
+  --color-primary-hover: #272179;
+  --color-primary-bright: #5B5BD6; /* AI features, focus states */
+  --color-primary-tint: #ECECFB;
+
+  /* Secondary: petrol */
+  --color-secondary: #0F4C5C;
+  --color-secondary-bright: #2A9DA8; /* charts, data */
+  --color-secondary-tint: #E6F1F3;
+
+  /* Tertiary: deep red */
+  --color-tertiary: #A30000;
+  --color-tertiary-bright: #CC0000; /* brightest highlight */
+  --color-tertiary-tint: #FDECEC;
+
+  /* Neutrals */
+  --color-ink: #14171F;   /* headings, body text */
+  --color-slate: #4A5261; /* secondary text */
+  --color-mist: #E6E8EC;  /* borders, dividers */
+  --color-cloud: #F7F8FA; /* page background */
+  --color-white: #FFFFFF;
+
+  /* Status */
+  --color-success: #1E8E5A;
+  --color-warning: #E0A100;
+  --color-error: #D9480F;
+
+  /* Semantic aliases */
+  --bg-page: var(--color-cloud);
+  --bg-surface: var(--color-white);
+  --text-default: var(--color-ink);
+  --text-muted: var(--color-slate);
+  --border-default: var(--color-mist);
+  --link: var(--color-primary);
+  --focus-ring: var(--color-primary-bright);
+}
+
+/* Example usage */
+
+body {
+  background: var(--bg-page);
+  color: var(--text-default);
+}
+
+a {
+  color: var(--link);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--color-secondary);
+  color: var(--color-white);
+}
+
+.badge-accent {
+  background: var(--color-tertiary-tint);
+  color: var(--color-tertiary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

@@ -1,0 +1,89 @@
+# Greenroom
+
+Practice interviews and presentations with Greenroom, and get feedback on speech, eye contact and posture. Frankie is your AI interviewer.
+Everything runs in the browser. Sessions, transcripts and recordings are stored on the user's device only.
+
+## Run it
+
+Requires Node 18 or later.
+
+    npm install     # also downloads two small vision models into ./models
+    npm start       # http://localhost:3000
+
+Open it in Chrome or Edge (best support for camera, microphone and speech recognition).
+
+## Structure
+
+- `server.js`: dependency-free static server. Serves `public/`, the MediaPipe runtime from `node_modules`, and `models/`.
+- `public/js/main.js`: hash router and header/footer.
+- `public/js/views-public.js`: Home, Value, About, Plans.
+- `public/js/views-app.js`: Dashboard, Setup, Summary, Settings.
+- `public/js/interview.js`: camera and mic check and live interview room.
+- `public/js/analysis.js`: speech (Web Speech API + mic level), face and posture (MediaPipe) metrics.
+- `public/js/summary.js`: scoring, action items, downloadable reports.
+- `public/js/jd.js`: reads a pasted job description (responsibilities, requirements, skills, seniority, years).
+- `public/js/questions.js`: picks the 3 to 4 most relevant questions; "Walk me through your resume" is always first.
+- `public/js/avatar.js`: Frankie's animated face (lip-sync, blinks, gaze, nods).
+- `public/js/voice.js`: Frankie's voice: browser voices with better ranking, sentence pacing and pronunciation fixes.
+- `public/js/views-recruiter.js`: Recruiter area (link on the homepage footer, no login yet): roles with status, job description, a default opening question plus up to 10 more (with suggestions from the job description), applicants, and per-role settings (camera required, minutes per question) that default to the recruiter's Profile and Settings. Uses a deep-red theme (`.theme-recruiter`).
+- `public/js/presentation.js`: Practice Presenting: a camera check and a room where you see only yourself.
+- `#/styleguide` (in the running app): live style guide for colors, type, components and wording. Source: `public/js/views-styleguide.js`.
+- `public/css/colors.css`: brand palette. `public/css/app.css`: layout and components.
+
+Login is intentionally skipped for now.
+
+## Optional AI features (Claude)
+
+Off by default. When turned on, Greenroom sends text (never video or audio) to Anthropic's Claude to write questions and ask follow-ups.
+
+1. Create an API key at https://platform.claude.com/settings/keys (add credits under Billing first).
+2. Open Settings in Greenroom, paste the key under "AI features". It is saved to `data/config.json` on this computer (git-ignored).
+   Or set the `ANTHROPIC_API_KEY` environment variable before `npm start`.
+3. Choose "Use Claude" when setting up an interview, and tick the follow-up box on the camera and mic check.
+
+The model defaults to `claude-sonnet-5-5`; override with `CADDIE_MODEL`. The server listens on 127.0.0.1 only and rejects cross-origin requests.
+`CADDIE_FAKE_AI=1` returns canned responses for testing without a key.
+
+## Shareable demo
+
+`npm run build:demo` creates a `dist/` folder (about 30 MB) that works on any static host, with no server.
+Upload that folder to, for example, Netlify Drop (https://app.netlify.com/drop) to get a link anyone can open.
+Each visitor's sessions, recordings and transcripts stay in their own browser. The optional AI features need the local server and are hidden on a static host.
+
+## Ratings and admin analytics
+
+After a completed interview or presentation, Greenroom asks for a 1 to 5 star rating and an optional comment.
+The footer on the homepage has an **Admin** link (the built-in sign-in is stored as hashes in `server.js`; override it with `CADDIE_ADMIN_USER` and `CADDIE_ADMIN_PASSWORD`). Once signed in, the admin can delete any rating; the stars and comment given together are one entry and are deleted together.
+The admin page shows anonymous counts (people who visited the homepage, started and completed each workflow) and average ratings with comments.
+
+- Run with `npm start`: visits, starts, completions, ratings and comments from every visitor are saved by the server in `data/events.jsonl`.
+  When hosting the server for other people, set `CADDIE_PUBLIC=1` (analytics and admin only; the AI endpoints stay local-only).
+- On a plain static host (the `dist` demo), there is no server, so the admin page shows only activity from the browser you are using.
+
+Only an anonymous visitor id, the event type, and the rating and comment are collected. Never video, audio, transcripts or answers.
+
+## Hosting the server for other people
+
+Run `npm start` on a host that runs Node. Set these environment variables:
+
+- `CADDIE_PUBLIC=1` turns on public mode: visitors' anonymous analytics are accepted and the server listens on all addresses. (AI endpoints stay local-only.)
+- `CADDIE_ADMIN_PASSWORD` (and optionally `CADDIE_ADMIN_USER`) replaces the built-in admin login, and takes priority over it. Set a strong one on a public host; if it is already set there, change it to change the live password.
+- `CADDIE_DATA_DIR` points at a folder that survives restarts (for example a mounted disk). Analytics are stored there in `events.jsonl`.
+- `PORT` is usually provided by the host.
+
+Build command: `npm install`. Start command: `npm start`. Camera access needs https, which hosting platforms provide.
+
+## Deploy on Railway
+
+`railway.json` tells Railway how to start the app. You still create the project in Railway yourself (menu names may differ slightly from these steps).
+
+1. In Railway, choose **New Project**, then **Deploy from GitHub repo**, and pick this repository and the branch you want live.
+2. Open the service's **Variables** tab and add:
+   - `CADDIE_PUBLIC` = `1`
+   - `CADDIE_ADMIN_PASSWORD` = a strong password of your own (this overrides the built-in sign-in, so change it here to change the live password)
+   - `CADDIE_DATA_DIR` = `/data`
+3. Add a **Volume** to the service and mount it at `/data`. Without it, ratings and analytics are lost on every restart or redeploy.
+4. Under **Settings, Networking**, choose **Generate Domain**. That `https://…up.railway.app` link is the shareable app, and camera and microphone work because it is https.
+5. Visit the link, open the footer's **Admin** link on the homepage, and sign in with your admin username and password.
+
+Railway sets `PORT` itself. AI features stay local-only on a public host (they never run for visitors), so there is no need to add an Anthropic key.

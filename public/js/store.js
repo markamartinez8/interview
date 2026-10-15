@@ -1,0 +1,108 @@
+// Local-only persistence: profile and preferences in localStorage, sessions and recordings in IndexedDB.
+window.Caddie = window.Caddie || { views: {} };
+(function (C) {
+  const LS = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage blocked */ } },
+  };
+  const mem = { sessions: new Map(), recordings: new Map() };
+  let dbPromise;
+  function db() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve) => {
+      try {
+        const r = indexedDB.open('caddie', 1);
+        r.onupgradeneeded = () => { r.result.createObjectStore('sessions', { keyPath: 'id' }); r.result.createObjectStore('recordings'); };
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = r.onblocked = () => resolve(null);
+      } catch { resolve(null); }
+    });
+    return dbPromise;
+  }
+  async function run(store, mode, fn) {
+    const d = await db();
+    if (!d) return undefined;
+    return new Promise((resolve, reject) => {
+      const t = d.transaction(store, mode);
+      const req = fn(t.objectStore(store));
+      t.oncomplete = () => resolve(req ? req.result : undefined);
+      t.onerror = t.onabort = () => reject(t.error);
+    });
+  }
+
+  const PROFILE_DEFAULT = { name: '', email: '', targetRole: '' };
+  const PREFS_DEFAULT = { mode: 'practice', voiceURI: '', silenceSec: 5, graceSec: 0, aiConsent: false, voiceSpeed: 1 };
+
+  C.store = {
+    getProfile: () => ({ ...PROFILE_DEFAULT, ...LS.get('caddie.profile', {}) }),
+    setProfile: (p) => LS.set('caddie.profile', p),
+    getPrefs: () => ({ ...PREFS_DEFAULT, ...LS.get('caddie.prefs', {}) }),
+    setPrefs: (p) => LS.set('caddie.prefs', p),
+    getLastSetup: () => LS.get('caddie.lastSetup', null),
+    setLastSetup: (s) => LS.set('caddie.lastSetup', s),
+
+    // Recruiter profile and default settings, applied to every role that has not set its own
+    getRecruiter: () => ({ name: '', email: '', company: '', cameraRequired: false, minutesPerQuestion: null, ...LS.get('caddie.recruiter', {}) }),
+    setRecruiter: (r) => LS.set('caddie.recruiter', r),
+    getRole: (id) => LS.get('caddie.roles', []).find((r) => r.id === id) || null,
+    // Applicant fields on a role: {id, name, email, completed, sessionId, completedAt}
+    updateApplicant(roleId, applicantId, patch) {
+      const all = LS.get('caddie.roles', []); const r = all.find((x) => x.id === roleId); if (!r) return;
+      const ap = (r.applicants || []).find((x) => x.id === applicantId); if (!ap) return;
+      Object.assign(ap, patch); LS.set('caddie.roles', all);
+    },
+    // Recruiter roles (kept in this browser for now)
+    getRoles: () => LS.get('caddie.roles', []),
+    saveRole(role) {
+      const all = LS.get('caddie.roles', []); const i = all.findIndex((r) => r.id === role.id);
+      if (i >= 0) all[i] = role; else all.unshift(role);
+      LS.set('caddie.roles', all);
+    },
+    deleteRole(id) { LS.set('caddie.roles', LS.get('caddie.roles', []).filter((r) => r.id !== id)); },
+
+    async saveSession(s) { mem.sessions.set(s.id, s); await run('sessions', 'readwrite', (st) => st.put(s)); },
+    async getSession(id) { return (await run('sessions', 'readonly', (st) => st.get(id))) || mem.sessions.get(id) || null; },
+    async listSessions() {
+      const fromDb = (await run('sessions', 'readonly', (st) => st.getAll())) || [...mem.sessions.values()];
+      return fromDb.sort((a, b) => b.createdAt - a.createdAt);
+    },
+    async deleteSession(id) {
+      mem.sessions.delete(id); mem.recordings.delete(id);
+      await run('sessions', 'readwrite', (st) => st.delete(id));
+      await run('recordings', 'readwrite', (st) => st.delete(id));
+    },
+    async saveRecording(id, blob) { mem.recordings.set(id, blob); await run('recordings', 'readwrite', (st) => st.put(blob, id)); },
+    async getRecording(id) { return (await run('recordings', 'readonly', (st) => st.get(id))) || mem.recordings.get(id) || null; },
+  };
+
+  C.util = {
+    esc: (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+    uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    fmtDur(sec) { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return `${m}:${String(s).padStart(2, '0')}`; },
+    fmtDate: (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+    fmtDateTime: (t) => new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+    download(filename, blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    },
+    // Full-screen "3, 2, 1" before recording starts. Returns a cancel function.
+    countdown(seconds, onDone, onCancel) {
+      const el = document.createElement('div'); el.className = 'countdown'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-label', 'Recording starts soon');
+      el.innerHTML = '<div class="cd-box"><div class="cd-label">Recording starts in</div><div class="cd-num" aria-live="assertive"></div><button class="btn btn-ghost btn-sm cd-cancel" type="button">Cancel</button></div>';
+      document.body.appendChild(el);
+      const num = el.querySelector('.cd-num'); let n = seconds, timer;
+      const finish = (go) => { clearTimeout(timer); el.remove(); if (go) onDone(); else if (onCancel) onCancel(); };
+      const tick = () => { if (n <= 0) return finish(true); num.textContent = n; num.classList.remove('pop'); void num.offsetWidth; num.classList.add('pop'); n--; timer = setTimeout(tick, 1000); };
+      el.querySelector('.cd-cancel').addEventListener('click', () => finish(false));
+      tick();
+      return () => finish(false);
+    },
+    toast(msg) {
+      const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+      document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
+    },
+  };
+})(window.Caddie);

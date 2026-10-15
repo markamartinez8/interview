@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Greenroom: dotted-length options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,750&family=Hanken+Grotesk:wght@400;600&display=swap">
+<style>
+:root{--primary:#3730A3;--primary-bright:#5B5BD6;--ink:#14171F;--slate:#4A5261;--mist:#E6E8EC;--cloud:#F7F8FA;--room:#10131C}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 "Hanken Grotesk",system-ui,sans-serif;background:var(--cloud);color:var(--ink);padding:clamp(16px,4vw,40px);max-width:1100px;margin-inline:auto}
+h1,h2,.word{font-family:"Bricolage Grotesque","Segoe UI",sans-serif;letter-spacing:-.02em}
+h1{margin:0 0 .3rem;font-size:2.2rem}h2{margin:2.2rem 0 .3rem;font-size:1.4rem}.lede,.note{color:var(--slate);max-width:64ch;margin:0}.note{font-size:.9rem;margin-top:.6rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem}
+.card{background:#fff;border:1px solid var(--mist);border-radius:16px;overflow:hidden}.card h3{margin:0;padding:.9rem 1rem 0;font-size:1rem}.card p{margin:0;padding:.1rem 1rem .8rem;color:var(--slate);font-size:.88rem}
+.pane{display:flex;align-items:center;justify-content:center;gap:.7rem;padding:1.6rem 1rem}.pane.dark{background:var(--room);color:#fff}
+.pane svg{width:56px;height:56px;flex:none}.word{font-weight:750;font-size:2rem;line-height:1}.word i{font-style:normal;font-weight:500;font-size:.62em;opacity:.7;margin-right:.28em;letter-spacing:0}
+.stack{flex-direction:column;gap:.5rem}.stack svg{width:84px;height:84px}.stack .word{display:flex;flex-direction:column;align-items:center;gap:.2rem}.stack .word i{margin:0;font-size:.45em;letter-spacing:.16em;text-transform:uppercase}
+.sizes{align-items:flex-end;gap:1.4rem}.sizes svg{width:auto}.tile{background:var(--primary);border-radius:22%;display:flex;align-items:center;justify-content:center}
+.tile.sq svg{width:64%;height:64%}
+</style></head><body>
+<h1>The Greenroom: dotted-length options</h1>
+<p class="lede">Same mark, three lengths of dotted line. The solid curve and the green bar are unchanged. Compare them side by side, at full size and small.</p>
+<div id="root"></div>
+<p class="note">Colors: indigo #3730A3 (#5B5BD6 on dark), green #1E8E5A (#2FBF7A on dark). Both come from the app palette.</p>
+<script>
+// Circle centre (32.35, 30.46), radius 18. The dotted arc starts at the upper right and runs counterclockwise to the stop point.
+const VERS = [
+  { name: 'Current: dots to about 10 o\'clock', note: 'Dots cover the top only. Fewest dots, calmest look.', dot: 'M47 20A18 18 0 0 0 16.76 21.46', gap: 11.93, solid: 'M16.76 21.46A18 18 0 1 0 50 34' },
+  { name: '1. Dots to 9 o\'clock', note: 'Dots run across from the green bar, down the left edge.', dot: 'M47 20A18 18 0 0 0 14.35 30.46', gap: 11.3, solid: 'M14.35 30.46A18 18 0 0 0 50 34' },
+  { name: '2. Dots to 6 o\'clock', note: 'Dots wrap the whole top and left, ending at the bottom of the G.', dot: 'M47 20A18 18 0 1 0 32.35 48.46', gap: 12.25, solid: 'M32.35 48.46A18 18 0 0 0 50 34' }
+];
+const mark = (v, p, g) => `<path d="${v.dot}" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.01 ${v.gap}"/>
+<path d="${v.solid}" fill="none" stroke="${p}" stroke-width="8" stroke-linecap="round"/>
+<path d="M50 34H35" fill="none" stroke="${g}" stroke-width="8" stroke-linecap="round"/>`;
+const L = ['#3730A3', '#1E8E5A'], D = ['#5B5BD6', '#2FBF7A'], W = ['#fff', '#2FBF7A'];
+const svg = (inner, style = '') => `<svg viewBox="0 0 64 64" aria-hidden="true" style="${style}">${inner}</svg>`;
+const word = '<span class="word"><i>The</i>Greenroom</span>';
+const tile = (v, s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(mark(v, ...W), 'width:68%;height:68%')}</div>`;
+document.getElementById('root').innerHTML = `<div class="grid">${VERS.map((v) => `<div class="card"><h3>${v.name}</h3><p>${v.note}</p>
+  <div class="pane">${svg(mark(v, ...L))}${word}</div>
+  <div class="pane dark">${svg(mark(v, ...D))}${word}</div>
+  <div class="pane" style="gap:1.4rem;align-items:flex-end">${svg(mark(v, ...L), 'width:64px;height:64px')}${svg(mark(v, ...L), 'width:40px;height:40px')}${svg(mark(v, ...L), 'width:24px;height:24px')}${svg(mark(v, ...L), 'width:16px;height:16px')}</div>
+  <div class="pane" style="gap:1.2rem;align-items:flex-end">${tile(v, 72)}${tile(v, 48)}${tile(v, 32)}${tile(v, 16)}</div></div>`).join('')}</div>`;
+</script>
+</body></html>
