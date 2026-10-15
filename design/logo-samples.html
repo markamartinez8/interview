@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logo samples: Greenroom and Dry Run</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,750&family=Hanken+Grotesk:wght@400;600&display=swap">
+<style>
+:root{--primary:#3730A3;--primary-bright:#5B5BD6;--tint:#ECECFB;--petrol:#0F4C5C;--petrol-bright:#2A9DA8;--ink:#14171F;--slate:#4A5261;--mist:#E6E8EC;--cloud:#F7F8FA;--green:#1E8E5A;--green-bright:#2FBF7A;--room:#10131C}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 "Hanken Grotesk",system-ui,sans-serif;background:var(--cloud);color:var(--ink);padding:clamp(16px,4vw,40px)}
+h1,h2,.word{font-family:"Bricolage Grotesque","Segoe UI",sans-serif;letter-spacing:-.02em}
+h1{margin:0 0 .3rem;font-size:2.2rem}h2{margin:2.4rem 0 .3rem;font-size:1.6rem}.lede{color:var(--slate);max-width:62ch;margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem}
+.opt{background:#fff;border:1px solid var(--mist);border-radius:16px;overflow:hidden}
+.opt h3{margin:0;padding:.9rem 1rem .2rem;font-size:1rem}.opt p{margin:0;padding:0 1rem .9rem;color:var(--slate);font-size:.88rem}
+.pane{display:flex;align-items:center;gap:.6rem;padding:1.2rem 1rem}.pane.dark{background:var(--room)}.pane.dark .word{color:#fff}
+.pane svg{width:48px;height:48px;flex:none}.word{font-weight:750;font-size:1.7rem}
+.pane.icon{justify-content:center;gap:1rem}.pane.icon svg{width:64px;height:64px}.pane.icon svg.s{width:24px;height:24px}.pane.icon svg.m{width:40px;height:40px}
+</style></head><body>
+<h1>Logo samples</h1><p class="lede">Three directions each for Greenroom and Dry Run, using the Caddie palette (indigo, petrol, and the app's success green for Greenroom). Each shows the full lockup on light and dark, then the icon at three sizes.</p>
+<div id="root"></div>
+<script>
+const M = {
+ gr: [
+  ['A. Doorway','An arched door with a light glowing: the room you step into before you go on.',
+   `<path d="M12 56V26a20 20 0 0 1 40 0v30z" fill="#3730A3"/><circle cx="32" cy="32" r="12" fill="#2FBF7A" opacity=".22"/><circle cx="32" cy="32" r="6" fill="#2FBF7A"/><rect x="8" y="56" width="48" height="4" rx="2" fill="#14171F"/>`,
+   `<path d="M12 56V26a20 20 0 0 1 40 0v30z" fill="#5B5BD6"/><circle cx="32" cy="32" r="12" fill="#2FBF7A" opacity=".25"/><circle cx="32" cy="32" r="6" fill="#2FBF7A"/><rect x="8" y="56" width="48" height="4" rx="2" fill="#E8EAF3"/>`, 'Greenroom'],
+  ['B. Spotlight','A cone of light on a figure: you, ready and in focus.',
+   `<circle cx="32" cy="32" r="30" fill="#3730A3"/><path d="M32 6 L14 54 H50 Z" fill="#fff" opacity=".22"/><circle cx="32" cy="36" r="6" fill="#2FBF7A"/><path d="M21 54a11 11 0 0 1 22 0z" fill="#2FBF7A"/>`,
+   `<circle cx="32" cy="32" r="30" fill="#5B5BD6"/><path d="M32 6 L14 54 H50 Z" fill="#fff" opacity=".22"/><circle cx="32" cy="36" r="6" fill="#2FBF7A"/><path d="M21 54a11 11 0 0 1 22 0z" fill="#2FBF7A"/>`, 'Greenroom'],
+  ['C. G with on-air dot','A rounded G monogram with the green "ready" light, simple enough for an app icon.',
+   `<path d="M47 20A18 18 0 1 0 50 34H35" fill="none" stroke="#3730A3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="14" r="5" fill="#2FBF7A"/>`,
+   `<path d="M47 20A18 18 0 1 0 50 34H35" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="14" r="5" fill="#2FBF7A"/>`, 'Greenroom']
+ ],
+ dr: [
+  ['A. Dashed ring','A dashed ring becoming solid: the practice lap, with progress. Dashed means "not for real yet".',
+   `<circle cx="32" cy="32" r="22" fill="none" stroke="#3730A3" stroke-width="5" stroke-dasharray="6 7" stroke-linecap="round" opacity=".45"/><path d="M32 10A22 22 0 0 1 54 32" fill="none" stroke="#3730A3" stroke-width="5" stroke-linecap="round"/><circle cx="54" cy="32" r="6" fill="#2A9DA8"/>`,
+   `<circle cx="32" cy="32" r="22" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="6 7" stroke-linecap="round" opacity=".45"/><path d="M32 10A22 22 0 0 1 54 32" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="54" cy="32" r="6" fill="#2A9DA8"/>`, 'Dry Run'],
+  ['B. Dashed bubble','A conversation outline with a play button: a rehearsal of the real conversation.',
+   `<path d="M12 12h40a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4H30l-10 10v-10h-8a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4z" fill="none" stroke="#3730A3" stroke-width="4" stroke-dasharray="6 5" stroke-linejoin="round"/><path d="M27 21l14 7-14 7z" fill="#2A9DA8"/>`,
+   `<path d="M12 12h40a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4H30l-10 10v-10h-8a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4z" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="6 5" stroke-linejoin="round"/><path d="M27 21l14 7-14 7z" fill="#2A9DA8"/>`, 'Dry Run'],
+  ['C. D in motion','A bold D with speed lines: fast, energetic, a run before the race.',
+   `<path d="M26 10h8a22 22 0 0 1 0 44h-8z" fill="#3730A3"/><rect x="6" y="20" width="16" height="5" rx="2.5" fill="#2A9DA8"/><rect x="10" y="30" width="12" height="5" rx="2.5" fill="#2A9DA8"/><rect x="14" y="40" width="8" height="5" rx="2.5" fill="#2A9DA8"/>`,
+   `<path d="M26 10h8a22 22 0 0 1 0 44h-8z" fill="#5B5BD6"/><rect x="6" y="20" width="16" height="5" rx="2.5" fill="#2A9DA8"/><rect x="10" y="30" width="12" height="5" rx="2.5" fill="#2A9DA8"/><rect x="14" y="40" width="8" height="5" rx="2.5" fill="#2A9DA8"/>`, 'Dry Run']
+ ]
+};
+const svg = (b, cls='') => `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true">${b}</svg>`;
+function sect(title, note, list){
+  return `<h2>${title}</h2><p class="lede">${note}</p><div class="grid">${list.map(([n,d,l,k,w])=>`<div class="opt"><h3>${n}</h3><p>${d}</p>
+  <div class="pane">${svg(l)}<span class="word">${w}</span></div>
+  <div class="pane dark">${svg(k)}<span class="word">${w}</span></div>
+  <div class="pane icon">${svg(l)}${svg(l,'m')}${svg(l,'s')}</div></div>`).join('')}</div>`;
+}
+document.getElementById('root').innerHTML =
+  sect('Greenroom','Theme: the calm space before you go on stage. Green is the one new color, borrowed from the app\'s success green.', M.gr) +
+  sect('Dry Run','Theme: a safe rehearsal. Dashes mean "not for real yet"; solid means progress.', M.dr);
+</script></body></html>
